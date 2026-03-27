@@ -102,60 +102,56 @@ export default function Toolbar() {
   return (
     <header className="toolbar">
       <div className="toolbar__brand">
-        <h1 className="toolbar__title">HYDRA DESIGNER</h1>
+        <div className="toolbar__brand-group">
+          <h1 className="toolbar__title">HYDRA｜DESIGNER</h1>
+          <span className="toolbar__subtitle">BETA v0.1</span>
+        </div>
       </div>
 
       <div className="toolbar__actions">
-        {/* Group 1: Workspace Modes */}
+        {/* Group 1: Workspace Mode Switcher */}
         <div className="toolbar__group">
           <button
             className={`toolbar__btn toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('visual')}
+            title="Switch to Node-based Visual Editor"
           >
             <LayoutTemplate size={14} className="toolbar__icon" />
-            Visual Editor
+            Visual
           </button>
           <button
             className={`toolbar__btn toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('code')}
+            title="Switch to Fullscreen Code Editor"
           >
             <Code size={14} className="toolbar__icon" />
-            Code Editor
+            Code
           </button>
         </div>
 
         <div className="toolbar__divider" />
 
-        {/* Group 2: Display / Output */}
+        {/* Group 2: View / Output Control */}
         <div className="toolbar__group">
-          <div className="toolbar__action-group toolbar__live-controls">
-            <button
-              className="toolbar__btn toolbar__btn--live-show"
-              onClick={launchLiveWindow}
-              title="Open External Preview Window"
-            >
-              <Monitor size={14} className="toolbar__icon" />
-              Performance window
-            </button>
-            <button
-              className="toolbar__btn toolbar__btn--live-hide"
-              onClick={closeLiveWindow}
-              title="Close External Window"
-            >
-              <MonitorOff size={14} />
-            </button>
-          </div>
+          <button
+            className="toolbar__btn"
+            onClick={launchLiveWindow}
+            title="Open dedicated performance window (Visuals only)"
+          >
+            <Monitor size={14} className="toolbar__icon" />
+            Performance window
+          </button>
         </div>
 
         <div className="toolbar__divider" />
 
-        {/* Group 3: Project / State */}
+        {/* Group 3: Project Management */}
         <div className="toolbar__group">
           <button
             className="toolbar__btn"
             onClick={() => lastPatch&&loadPatch(lastPatch)}
             disabled={!lastPatch}
-            title="Reload Last Saved State"
+            title="Restore the last state of the most recent project"
           >
             <RotateCcw size={14} className="toolbar__icon" />
             Load Last
@@ -165,6 +161,7 @@ export default function Toolbar() {
             <button
               className="toolbar__btn"
               onClick={() => { setShowSave(!showSave); setShowMenu(false); }}
+              title="Save current patch state locally"
             >
               <Save size={14} className="toolbar__icon" />
               Save
@@ -191,6 +188,7 @@ export default function Toolbar() {
             <button
               className="toolbar__btn"
               onClick={() => { setShowMenu(!showMenu); setShowSave(false); }}
+              title="Browse projects and exports"
             >
               <FolderOpen size={14} className="toolbar__icon" />
               Projects
@@ -198,22 +196,22 @@ export default function Toolbar() {
             </button>
             {showMenu&&(
               <div className="toolbar__dropdown" style={{ width: '240px' }}>
-                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Actions
                 </div>
                 <button className="toolbar__dropdown-item" onClick={handleExportJS}>
                   <Download size={12} style={{ marginRight: '8px' }} />
-                  Export Patch (.js)
+                  Export .js
                 </button>
                 <button className="toolbar__dropdown-item" onClick={handleImportJS}>
                   <Upload size={12} style={{ marginRight: '8px' }} />
-                  Import Patch (.js)
+                  Import .js
                 </button>
 
                 <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-subtle)' }}></div>
 
-                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Project List
+                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Your Projects
                 </div>
                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                   {savedPatches.length===0? (
@@ -242,12 +240,12 @@ export default function Toolbar() {
 
         <div className="toolbar__divider" />
 
-        {/* Group 4: Destructive */}
+        {/* Group 4: Performance / Reset */}
         <div className="toolbar__group">
           <button
             className="toolbar__btn toolbar__btn--danger"
             onClick={() => {
-              if (window.confirm('Clear the entire patch? This cannot be undone.')) {
+              if (window.confirm('Clear current workspace? This will remove all nodes and links.')) {
                 clearGraph();
               }
             }}

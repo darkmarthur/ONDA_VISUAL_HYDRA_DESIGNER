@@ -60,6 +60,8 @@ interface GraphState {
   clearHydraLogs: () => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
+  addOutputNode: (buffer: HydraOutput, position: { x: number; y: number }) => void;
+  addAndConnectOutputNode: (buffer: HydraOutput, position: { x: number; y: number }, connectFrom: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null }) => void;
   serializeGraph: () => string;
   deserializeGraph: (json: string) => void;
   savePatch: (name: string) => void;
@@ -612,6 +614,63 @@ export const useGraphStore = create<GraphState>()(
       return [];
     }
   },
+
+  addOutputNode: (buffer, position) => {
+    const bufferIndex = parseInt(buffer.slice(1), 10);
+    const fnDef = getHydraFunction('out')!;
+    const newNode: Node<HydraNodeData> = {
+      id: generateNodeId(),
+      type: 'hydraOutput',
+      position,
+      data: {
+        hydraFunction: 'out',
+        functionDef: fnDef,
+        params: { buffer: bufferIndex },
+        label: `out(${buffer})`,
+        nodeType: 'output',
+      },
+    };
+
+    set((state) => ({ nodes: [...state.nodes, newNode] }));
+    get().regenerateCode();
+  },
+
+  addAndConnectOutputNode: (buffer, position, connectFrom) => {
+    const bufferIndex = parseInt(buffer.slice(1), 10);
+    const newNodeId = generateNodeId();
+    const fnDef = getHydraFunction('out')!;
+    const newNode: Node<HydraNodeData> = {
+      id: newNodeId,
+      type: 'hydraOutput',
+      position,
+      data: {
+        hydraFunction: 'out',
+        functionDef: fnDef,
+        params: { buffer: bufferIndex },
+        label: `out(${buffer})`,
+        nodeType: 'output',
+      },
+    };
+
+    let newEdge: Edge | null = null;
+    if (connectFrom.handleType === 'source') {
+      newEdge = {
+        id: `e-${connectFrom.nodeId}-${newNodeId}`,
+        source: connectFrom.nodeId,
+        sourceHandle: connectFrom.handleId,
+        target: newNodeId,
+        targetHandle: 'output-in',
+        animated: true,
+        style: { stroke: '#ef4444', strokeWidth: 2 },
+      };
+    }
+
+    set((state) => ({ 
+      nodes: [...state.nodes, newNode],
+      edges: newEdge ? [...state.edges, newEdge] : state.edges 
+    }));
+    get().regenerateCode();
+  },
 }),
   {
     partialize: (state) => ({
@@ -623,71 +682,4 @@ export const useGraphStore = create<GraphState>()(
   }
 ));
 
-// ─── Output node factory ─────────────────────────────────────────────────────
-export function addOutputNode(
-  buffer: HydraOutput,
-  position: { x: number; y: number },
-): void {
-  const store = useGraphStore.getState();
-  const bufferIndex = parseInt(buffer.slice(1), 10);
-
-  const fnDef = getHydraFunction('out')!;
-  const newNode: Node<HydraNodeData> = {
-    id: generateNodeId(),
-    type: 'hydraOutput',
-    position,
-    data: {
-      hydraFunction: 'out',
-      functionDef: fnDef,
-      params: { buffer: bufferIndex },
-      label: `out(${buffer})`,
-      nodeType: 'output',
-    },
-  };
-
-  useGraphStore.setState((state) => ({ nodes: [...state.nodes, newNode] }));
-  useGraphStore.getState().regenerateCode();
-}
-
-export function addAndConnectOutputNode(
-  buffer: HydraOutput,
-  position: { x: number; y: number },
-  connectFrom: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null },
-): void {
-  const bufferIndex = parseInt(buffer.slice(1), 10);
-  const newNodeId = generateNodeId();
-
-  const fnDef = getHydraFunction('out')!;
-  const newNode: Node<HydraNodeData> = {
-    id: newNodeId,
-    type: 'hydraOutput',
-    position,
-    data: {
-      hydraFunction: 'out',
-      functionDef: fnDef,
-      params: { buffer: bufferIndex },
-      label: `out(${buffer})`,
-      nodeType: 'output',
-    },
-  };
-
-  let newEdge: Edge | null = null;
-
-  if (connectFrom.handleType === 'source') {
-    newEdge = {
-      id: `e-${connectFrom.nodeId}-${newNodeId}`,
-      source: connectFrom.nodeId,
-      sourceHandle: connectFrom.handleId,
-      target: newNodeId,
-      targetHandle: 'output-in',
-      animated: true,
-      style: { stroke: '#ef4444', strokeWidth: 2 },
-    };
-  }
-
-  useGraphStore.setState((state) => ({ 
-    nodes: [...state.nodes, newNode],
-    edges: newEdge ? [...state.edges, newEdge] : state.edges 
-  }));
-  useGraphStore.getState().regenerateCode();
-}
+// End of Graph Store

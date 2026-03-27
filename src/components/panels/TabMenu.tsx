@@ -135,8 +135,7 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
 
     if (activeDraftConnection) {
       if (fn.isOutput) {
-        const { addAndConnectOutputNode } = require('@/store/graphStore');
-        addAndConnectOutputNode(fn.buffer as any, { x, y }, activeDraftConnection);
+        useGraphStore.getState().addAndConnectOutputNode(fn.buffer as any, { x, y }, activeDraftConnection);
       } else {
         addAndConnectNode(fn.name, { x, y }, activeDraftConnection);
       }
@@ -146,7 +145,7 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
     }
 
     if (fn.isOutput) {
-      addOutputNode(fn.buffer as any, { x, y });
+      useGraphStore.getState().addOutputNode(fn.buffer as any, { x, y });
     } else {
       addNode(fn.name, { x, y });
     }

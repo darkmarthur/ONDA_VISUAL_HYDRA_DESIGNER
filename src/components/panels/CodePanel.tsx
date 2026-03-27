@@ -59,16 +59,23 @@ export default function CodePanel() {
       <div className="code-panel__editor-container">
         <Editor
           value={generatedCode}
-          onValueChange={(code) => updateGraphFromCode(code)}
-          highlight={(code) => Prism.highlight(code, Prism.languages.javascript || Prism.languages.js, 'javascript')}
-          padding={20}
+          onValueChange={(code) => {
+            if (code !== generatedCode) {
+              updateGraphFromCode(code);
+            }
+          }}
+          highlight={(code) => Prism.highlight(code, Prism.languages.javascript, 'javascript')}
+          padding={24}
           className="code-panel__editor"
           spellCheck={false}
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: 13,
+            lineHeight: '1.6',
             minHeight: '100%',
             width: '100%',
+            backgroundColor: 'transparent',
+            color: 'var(--text-primary)',
           }}
         />
       </div>

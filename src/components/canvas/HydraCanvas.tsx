@@ -21,18 +21,23 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Activity, Box, Map } from 'lucide-react';
+import { Activity, Box, Map, Trash2, Plus } from 'lucide-react';
 import SourceNode from './nodes/SourceNode';
 import TransformNode from './nodes/TransformNode';
 import OutputNode from './nodes/OutputNode';
+import HydraEdge from './HydraEdge';
 import FloatingCable from './FloatingCable';
-import { useGraphStore, addOutputNode } from '@/store/graphStore';
+import { useGraphStore } from '@/store/graphStore';
 import { HydraNodeData, HydraOutput } from '@/hydra/types';
 
 const nodeTypes: NodeTypes = {
   hydraSource: SourceNode,
   hydraTransform: TransformNode,
   hydraOutput: OutputNode,
+};
+
+const edgeTypes = {
+  hydra: HydraEdge,
 };
 
 function HydraCanvasInner() {
@@ -45,14 +50,13 @@ function HydraCanvasInner() {
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange);
   const onConnect = useGraphStore((s) => s.onConnect);
   const addNode = useGraphStore((s) => s.addNode);
+  const addOutputNode = useGraphStore((s) => s.addOutputNode);
   const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
   const removeEdge = useGraphStore((s) => s.removeEdge);
   const setActiveDraftConnection = useGraphStore((s) => s.setActiveDraftConnection);
   const activeDraftConnection = useGraphStore((s) => s.activeDraftConnection);
   const showMiniMap = useGraphStore((s) => s.showMiniMap);
   const setShowMiniMap = useGraphStore((s) => s.setShowMiniMap);
-
-  const [edgeMenu, setEdgeMenu] = React.useState<{ id: string; x: number; y: number } | null>(null);
 
   const onConnectStart = useCallback((_: any, params: OnConnectStartParams) => {
     if (params.nodeId) {
@@ -113,7 +117,7 @@ function HydraCanvasInner() {
         addNode(parsed.functionName, position);
       }
     },
-    [screenToFlowPosition, addNode],
+    [screenToFlowPosition, addNode, addOutputNode],
   );
 
   const onNodeClick = useCallback(
@@ -125,7 +129,6 @@ function HydraCanvasInner() {
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
-    setEdgeMenu(null);
     setActiveDraftConnection(null);
   }, [setSelectedNode, setActiveDraftConnection]);
 
@@ -139,22 +142,6 @@ function HydraCanvasInner() {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [activeDraftConnection, setActiveDraftConnection]);
-
-  const onEdgeDoubleClick = useCallback(
-    (event: React.MouseEvent, edge: Edge) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setEdgeMenu({ id: edge.id, x: event.clientX, y: event.clientY });
-    },
-    [],
-  );
-
-  const handleDeleteEdge = useCallback(() => {
-    if (edgeMenu) {
-      removeEdge(edgeMenu.id);
-      setEdgeMenu(null);
-    }
-  }, [edgeMenu, removeEdge]);
 
   const lastMousePos = useRef({ 
     x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0, 
@@ -185,7 +172,7 @@ function HydraCanvasInner() {
 
   const defaultEdgeOptions = useMemo(
     () => ({
-      type: 'smoothstep',
+      type: 'hydra',
       animated: true,
       style: { stroke: '#6366f1', strokeWidth: 2 },
     }),
@@ -203,11 +190,10 @@ function HydraCanvasInner() {
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         onDrop={onDrop}
-        onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        onEdgeDoubleClick={onEdgeDoubleClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionLineType={ConnectionLineType.SmoothStep}
         connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 3 }}
@@ -256,37 +242,6 @@ function HydraCanvasInner() {
         )}
         
         <FloatingCable />
-
-        {edgeMenu && (
-          <div
-            style={{
-              position: 'fixed',
-              left: edgeMenu.x,
-              top: edgeMenu.y,
-              zIndex: 1000,
-            }}
-            className="toolbar__dropdown"
-          >
-            <button
-              className="toolbar__dropdown-item"
-              style={{ color: 'var(--accent-red)' }}
-              onClick={handleDeleteEdge}
-            >
-              Delete Connection
-            </button>
-            <button
-              className="toolbar__dropdown-item"
-              onClick={() => {
-                window.dispatchEvent(
-                  new CustomEvent('open-tab-menu', { detail: { insertEdgeId: edgeMenu.id } })
-                );
-                setEdgeMenu(null);
-              }}
-            >
-              Insert Node...
-            </button>
-          </div>
-        )}
       </ReactFlow>
     </div>
   );

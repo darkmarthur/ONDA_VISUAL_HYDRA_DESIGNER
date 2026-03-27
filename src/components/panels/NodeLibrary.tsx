@@ -60,7 +60,7 @@ export default function NodeLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const addNode = useGraphStore((s) => s.addNode);
-  const { addOutputNode } = require('@/store/graphStore');
+  const addOutputNode = useGraphStore((s) => s.addOutputNode);
 
   const filteredFunctions = searchQuery
     ? hydraFunctionRegistry.filter((fn) =>

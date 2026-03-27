@@ -695,14 +695,14 @@ export function getHydraFunctionsByType(type: string): HydraFunctionDef[] {
 
 // Category metadata for the UI
 export const categoryMeta: Record<string, { label: string; color: string }> = {
-  source:         { label: 'Source',    color: '#f472b6' },
-  geometry:       { label: 'Geometry',  color: '#60a5fa' },
-  color:          { label: 'Color',     color: '#a78bfa' },
-  blend:          { label: 'Blend',     color: '#34d399' },
-  modulate:       { label: 'Modulate',  color: '#fbbf24' },
-  externalSource: { label: 'External',  color: '#f97316' },
-  output:         { label: 'Output',    color: '#ef4444' },
-  settings:       { label: 'Settings',  color: '#94a3b8' },
-  array:          { label: 'Array',     color: '#d946ef' },
-  audio:          { label: 'Audio',     color: '#2dd4bf' },
+  source:         { label: 'Source',    color: '#f472b6' }, 
+  geometry:       { label: 'Geometry',  color: '#60a5fa' }, 
+  color:          { label: 'Color',     color: '#818cf8' }, 
+  blend:          { label: 'Blend',     color: '#34d399' }, 
+  modulate:       { label: 'Modulate',  color: '#fbbf24' }, 
+  externalSource: { label: 'External',  color: '#fb923c' }, 
+  output:         { label: 'Output',    color: '#f87171' }, 
+  settings:       { label: 'Settings',  color: '#71717a' }, 
+  array:          { label: 'Array',     color: '#c084fc' }, 
+  audio:          { label: 'Audio',     color: '#2dd4bf' }, 
 };

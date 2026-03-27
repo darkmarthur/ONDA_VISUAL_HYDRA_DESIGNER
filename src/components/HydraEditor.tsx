@@ -15,6 +15,7 @@ import HydraPreview from './preview/HydraPreview';
 import Toolbar from './panels/Toolbar';
 import TabMenu from './panels/TabMenu';
 import Footer from './panels/Footer';
+import MobileWarning from './panels/MobileWarning';
 
 export default function HydraEditor() {
   const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string; position?: { x: number; y: number } }>({ open: false });
@@ -102,6 +103,8 @@ export default function HydraEditor() {
           spawnPosition={tabMenuConfig.position}
         />
       )}
+
+      <MobileWarning />
     </div>
   );
 }

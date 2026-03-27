@@ -12,16 +12,17 @@ const HydraEditor=dynamic(() => import('../components/HydraEditor'), {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#0a0a0f',
-        color: '#6366f1',
+        background: '#050505',
+        color: '#f4f4f5',
         fontFamily: "'Inter', sans-serif",
-        fontSize: '14px',
+        fontSize: '11px',
         letterSpacing: '2px',
+        textTransform: 'uppercase',
       }}
     >
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '32px', marginBottom: '16px', filter: 'drop-shadow(0 0 12px rgba(99,102,241,0.5))' }}>◈</div>
-        <div>LOADING HYDRA DESIGNER...</div>
+        <div style={{ fontStyle: 'normal', fontSize: '24px', marginBottom: '12px', opacity: 0.8 }}>◌</div>
+        <div style={{ opacity: 0.5 }}>ONDA｜HYDRA</div>
       </div>
     </div>
   ),
