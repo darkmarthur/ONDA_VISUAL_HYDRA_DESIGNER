@@ -566,7 +566,34 @@ html, body {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.hydra-node__title-group {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+}
+
+.hydra-node__badge {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hydra-node__alias-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--accent-primary);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 4px;
+  outline: none;
+  width: 100%;
 }
 
 .hydra-node__error-icon {

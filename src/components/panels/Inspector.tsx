@@ -8,12 +8,14 @@
 import React from 'react';
 import { useGraphStore } from '@/store/graphStore';
 import { categoryMeta } from '@/hydra/registry';
+import { HydraParamDef } from '@/hydra/types';
 
 export default function Inspector() {
   const nodes = useGraphStore((s) => s.nodes);
   const selectedNodeId = useGraphStore((s) => s.selectedNodeId);
   const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
   const removeNode = useGraphStore((s) => s.removeNode);
+  const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
 
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId)
@@ -50,12 +52,23 @@ export default function Inspector() {
         <div className="inspector__meta">
           <span className="inspector__type-badge">type: {data.functionDef.type}</span>
         </div>
+        <div className="inspector__alias-section" style={{ marginTop: '16px' }}>
+          <label className="inspector__param-label" style={{ display: 'block', marginBottom: '4px' }}>Node Alias (Custom Label)</label>
+          <input 
+            type="text" 
+            className="inspector__param-number" 
+            style={{ width: '100%', textAlign: 'left', padding: '6px 8px' }}
+            placeholder={`e.g. main_${data.hydraFunction}`}
+            value={data.alias || ''}
+            onChange={(e) => setNodeAlias(selectedNode.id, e.target.value)}
+          />
+        </div>
       </div>
 
       {!isOutput && data.functionDef.params.length > 0 && (
         <div className="inspector__params">
           <h4 className="inspector__section-title">Parameters</h4>
-          {data.functionDef.params.map((paramDef) => {
+          {data.functionDef.params.map((paramDef: HydraParamDef) => {
             const value = data.params[paramDef.name] ?? paramDef.default;
             return (
               <div key={paramDef.name} className="inspector__param">
@@ -119,7 +132,7 @@ export default function Inspector() {
         <button
           className="inspector__btn inspector__btn--reset"
           onClick={() => {
-            data.functionDef.params.forEach((p) => {
+            data.functionDef.params.forEach((p: HydraParamDef) => {
               updateNodeParam(selectedNode.id, p.name, p.default);
             });
           }}

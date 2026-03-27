@@ -91,18 +91,25 @@ function buildNodeExpression(
   const fnDef = node.data.functionDef;
   const fnName = node.data.hydraFunction;
   const params = node.data.params;
+  const alias = node.data.alias;
 
   // Build the parameter list for this function call
   const paramStr = buildParamString(fnDef.params, params);
+
+  const formatAlias = (prefix: string) => {
+    if (!alias) return `\n${prefix}`;
+    const safeAlias = alias.replace(/"/g, '\\"');
+    return `\n// node_label: "${safeAlias}"\n${prefix}`;
+  };
 
   if (fnDef.type === 'src') {
     // Source node — this is the start of a chain
     // Check if it's a 'src' function referencing a buffer
     if (fnName === 'src') {
       const bufferIdx = params.buffer ?? 0;
-      return `src(o${bufferIdx})`;
+      return alias ? `// node_label: "${alias.replace(/"/g, '\\"')}"\nsrc(o${bufferIdx})` : `src(o${bufferIdx})`;
     }
-    return `${fnName}(${paramStr})`;
+    return alias ? `// node_label: "${alias.replace(/"/g, '\\"')}"\n${fnName}(${paramStr})` : `${fnName}(${paramStr})`;
   }
 
   // For transform nodes (coord, color, combine, combineCoord),
@@ -137,23 +144,23 @@ function buildNodeExpression(
 
       if (secondaryExpr) {
         const allParams = paramStr ? `, ${paramStr}` : '';
-        return `${parentExpr}\n  .${fnName}(${secondaryExpr}${allParams})`;
+        return `${parentExpr}${formatAlias(`  .${fnName}(${secondaryExpr}${allParams})`)}`;
       }
     }
 
     // If no secondary connected, still generate with empty secondary
     // (will be invalid Hydra but shows intent)
     if (paramStr) {
-      return `${parentExpr}\n  .${fnName}(/* texture */, ${paramStr})`;
+      return `${parentExpr}${formatAlias(`  .${fnName}(/* texture */, ${paramStr})`)}`;
     }
-    return `${parentExpr}\n  .${fnName}(/* texture */)`;
+    return `${parentExpr}${formatAlias(`  .${fnName}(/* texture */)`)}`;
   }
 
   // Regular coord/color transform — just chain it
   if (paramStr) {
-    return `${parentExpr}\n  .${fnName}(${paramStr})`;
+    return `${parentExpr}${formatAlias(`  .${fnName}(${paramStr})`)}`;
   }
-  return `${parentExpr}\n  .${fnName}()`;
+  return `${parentExpr}${formatAlias(`  .${fnName}()`)}`;
 }
 
 /**

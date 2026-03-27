@@ -54,6 +54,7 @@ export interface HydraNodeData {
   functionDef: HydraFunctionDef;   // full definition from registry
   params: Record<string, number>;  // current parameter values
   label: string;                   // display label
+  alias?: string;                  // custom conceptual label
   nodeType: HydraNodeType;         // visual node classification
 }
 
@@ -82,6 +83,7 @@ export interface SerializedNode {
   data: {
     hydraFunction: string;
     params: Record<string, number>;
+    alias?: string;
   };
 }
 

@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
 import { HydraNodeData } from '@/hydra/types';
 import { useGraphStore } from '@/store/graphStore';
@@ -17,6 +17,24 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
 
   const inConnections = useHandleConnections({ type: 'target', id: 'output-in' });
   const hasError = inConnections.length === 0;
+
+  const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
+  const [isEditingAlias, setIsEditingAlias] = useState(false);
+  const [editAlias, setEditAlias] = useState(data.alias || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingAlias && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditingAlias]);
+
+  const handleAliasSubmit = () => {
+    setIsEditingAlias(false);
+    if (editAlias !== data.alias) {
+      setNodeAlias(id, editAlias);
+    }
+  };
 
   return (
     <div
@@ -31,9 +49,37 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         className="hydra-handle hydra-handle--output-in"
       />
 
-      <div className="hydra-node__header">
+      <div 
+        className="hydra-node__header"
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setIsEditingAlias(true);
+          setEditAlias(data.alias || '');
+        }}
+        title="Double-click to set alias"
+      >
         <span className="hydra-node__icon">▹</span>
-        <span className="hydra-node__label">out</span>
+        {isEditingAlias ? (
+          <input
+            ref={inputRef}
+            className="hydra-node__alias-input"
+            value={editAlias}
+            onChange={(e) => setEditAlias(e.target.value)}
+            onBlur={handleAliasSubmit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAliasSubmit();
+              if (e.key === 'Escape') {
+                setIsEditingAlias(false);
+                setEditAlias(data.alias || '');
+              }
+            }}
+          />
+        ) : (
+          <div className="hydra-node__title-group">
+            <span className="hydra-node__label">{data.alias || 'out'}</span>
+            {data.alias && <span className="hydra-node__badge">out</span>}
+          </div>
+        )}
         {hasError && (
           <span className="hydra-node__error-icon" title="Missing required connection">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent-red)" xmlns="http://www.w3.org/2000/svg">

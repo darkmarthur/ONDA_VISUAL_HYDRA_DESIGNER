@@ -39,6 +39,7 @@ interface GraphState {
   addNode: (hydraFunctionName: string, position: { x: number; y: number }) => void;
   insertNodeOnEdge: (edgeId: string, hydraFunctionName: string) => void;
   removeNode: (nodeId: string) => void;
+  setNodeAlias: (nodeId: string, alias: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
   removeEdge: (edgeId: string) => void;
   updateNodeParam: (nodeId: string, paramName: string, value: number) => void;
@@ -256,6 +257,20 @@ export const useGraphStore = create<GraphState>()(
     set({ selectedNodeId: nodeId });
   },
 
+  setNodeAlias: (nodeId, alias) => {
+    set((state) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: { ...n.data, alias },
+            }
+          : n
+      ),
+    }));
+    get().regenerateCode();
+  },
+
   updateNodeParam: (nodeId, paramName, value) => {
     set((state) => ({
       nodes: state.nodes.map((n) =>
@@ -310,15 +325,22 @@ export const useGraphStore = create<GraphState>()(
     // Sync parameter changes back to the graph from raw code editing
     const nodes = get().nodes;
     let updatedNodes = [...nodes];
-    const regex = /(\w+)\s*\(([^)]*)\)/g;
-    let match;
     
-    while ((match = regex.exec(newCode)) !== null) {
+    // To handle multiple identical functions, keep track of which occurrence we're matching
+    const funcOccurrences: Record<string, number> = {};
+    
+    // First let's extract all functions with their parameters in order
+    const fnRegex = /(\w+)\s*\(([^)]*)\)/g;
+    let match;
+    while ((match = fnRegex.exec(newCode)) !== null) {
       const funcName = match[1];
       const argsStr = match[2];
       const args = argsStr.split(',').map(s => parseFloat(s.trim()));
       
-      const nodeIndex = updatedNodes.findIndex(n => n.data.hydraFunction === funcName);
+      const occurrencesSoFar = funcOccurrences[funcName] || 0;
+      const matchingNodes = updatedNodes.filter(n => n.data.hydraFunction === funcName);
+      const nodeIndex = updatedNodes.findIndex(n => n.id === matchingNodes[Math.min(occurrencesSoFar, matchingNodes.length - 1)]?.id);
+      
       if (nodeIndex >= 0) {
         const node = updatedNodes[nodeIndex];
         const newParams = { ...node.data.params };
@@ -334,6 +356,29 @@ export const useGraphStore = create<GraphState>()(
           data: { ...node.data, params: newParams }
         };
       }
+      funcOccurrences[funcName] = occurrencesSoFar + 1;
+    }
+
+    // Now extract node aliases
+    // Looks for: // node_label: "my alias"\n.function(
+    const aliasOccurrences: Record<string, number> = {};
+    const aliasRegex = /\/\/\s*node_label:\s*"([^"]+)"\s*(?:\r\n|\n|\s)*\.?(\w+)\s*\(/g;
+    let aliasMatch;
+    while ((aliasMatch = aliasRegex.exec(newCode)) !== null) {
+      const alias = aliasMatch[1];
+      const fnName = aliasMatch[2];
+      
+      const occurrencesSoFar = aliasOccurrences[fnName] || 0;
+      const matchingNodes = updatedNodes.filter(n => n.data.hydraFunction === fnName);
+      const nodeIndex = updatedNodes.findIndex(n => n.id === matchingNodes[Math.min(occurrencesSoFar, matchingNodes.length - 1)]?.id);
+      
+      if (nodeIndex >= 0) {
+        updatedNodes[nodeIndex] = {
+           ...updatedNodes[nodeIndex],
+           data: { ...updatedNodes[nodeIndex].data, alias }
+        };
+      }
+      aliasOccurrences[fnName] = occurrencesSoFar + 1;
     }
     
     set({ nodes: updatedNodes, generatedCode: newCode });
