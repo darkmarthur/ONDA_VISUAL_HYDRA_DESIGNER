@@ -111,7 +111,7 @@ export const useGraphStore = create<GraphState>()(
   nodes: [],
   edges: [],
   selectedNodeId: null,
-  generatedCode: '// Add nodes and connect them to generate Hydra code',
+  generatedCode: 'noise(() => 1)\n  .pixelate()\n  .colorama()\n  .out(o0)',
   hydraError: null,
   editorMode: 'visual',
   showPreview: true,
@@ -135,34 +135,35 @@ export const useGraphStore = create<GraphState>()(
   },
 
   onEdgesChange: (changes) => {
-    // Detect and clean up parameter bindings when edges are removed
-    changes.forEach((change) => {
-      if (change.type === 'remove') {
-        const edge = get().edges.find((e) => e.id === change.id);
-        if (edge?.targetHandle?.startsWith('param-in:')) {
-          const paramName = edge.targetHandle.split(':')[1];
-          set((state) => ({
-            nodes: state.nodes.map((node) => {
+    set((state) => {
+      let nextNodes = [...state.nodes];
+      
+      // Detect and clean up parameter bindings when edges are removed
+      changes.forEach((change) => {
+        if (change.type === 'remove') {
+          const edge = state.edges.find((e) => e.id === change.id);
+          if (edge?.targetHandle?.startsWith('param-in:')) {
+            const paramName = edge.targetHandle.split(':')[1];
+            nextNodes = nextNodes.map((node) => {
               if (node.id === edge.target) {
                 const newBindings = { ...node.data.bindings };
-                if (newBindings[paramName]) {
-                   newBindings[paramName] = { mode: 'literal' };
-                }
+                delete newBindings[paramName]; // Purge binding completely
                 return { 
                   ...node, 
                   data: { ...node.data, bindings: newBindings } 
                 };
               }
               return node;
-            })
-          }));
+            });
+          }
         }
-      }
-    });
+      });
 
-    set((state) => {
       const nextEdges = applyEdgeChanges(changes, state.edges);
-      return { edges: deduplicate(nextEdges) };
+      return { 
+        nodes: deduplicate(nextNodes), 
+        edges: deduplicate(nextEdges) as Edge[]
+      };
     });
     
     get().regenerateCode();
@@ -510,9 +511,45 @@ export const useGraphStore = create<GraphState>()(
   },
 
   regenerateCode: () => {
-    const { nodes, edges, generatedCode } = get();
+    let { nodes, edges, generatedCode } = get();
+
+    // ─── HEALING PASS ───
+    // Ensure no bindings exist without matching edges
+    let hasHealed = false;
+    const healedNodes = nodes.map(node => {
+      if (!node.data.bindings || Object.keys(node.data.bindings).length === 0) return node;
+      
+      const newBindings = { ...node.data.bindings };
+      let nodeChanged = false;
+      
+      Object.keys(newBindings).forEach(paramName => {
+        const b = newBindings[paramName];
+        if (b.mode === 'value_node') {
+          const hasEdge = edges.some(e => 
+            e.target === node.id && 
+            e.targetHandle === `param-in:${paramName}`
+          );
+          if (!hasEdge) {
+            delete newBindings[paramName];
+            nodeChanged = true;
+          }
+        }
+      });
+      
+      if (nodeChanged) {
+        hasHealed = true;
+        return { ...node, data: { ...node.data, bindings: newBindings } };
+      }
+      return node;
+    });
+
+    if (hasHealed) {
+      nodes = healedNodes;
+      set({ nodes });
+    }
+
     const code = generateHydraCode(nodes, edges);
-    if (code === generatedCode) return;
+    if (code === generatedCode && !hasHealed) return;
     set({ generatedCode: code });
     
     // Sync
@@ -536,7 +573,13 @@ export const useGraphStore = create<GraphState>()(
   loadAutosave: () => {
     try {
       const saved = localStorage.getItem('hydra-autosave');
-      if (saved) get().deserializeGraph(saved);
+      if (saved) {
+        get().deserializeGraph(saved);
+      } else {
+        // First time load: Initialize with default code
+        const defaultCode = get().generatedCode;
+        get().updateGraphFromCode(defaultCode);
+      }
     } catch (err) {
       console.error('Failed to load autosave:', err);
     }
