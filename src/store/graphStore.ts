@@ -32,6 +32,7 @@ interface GraphState {
   generatedCode: string;
   hydraError: string | null;
   editorMode: 'visual' | 'code';
+  showPreview: boolean;
   activeDraftConnection: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null;
 
   // ─── Actions ─────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ interface GraphState {
   regenerateCode: () => void;
   updateGraphFromCode: (newCode: string) => void;
   setEditorMode: (mode: 'visual' | 'code') => void;
+  setShowPreview: (show: boolean) => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   serializeGraph: () => string;
@@ -80,6 +82,7 @@ export const useGraphStore = create<GraphState>()(
   generatedCode: '// Add nodes and connect them to generate Hydra code',
   hydraError: null,
   editorMode: 'visual',
+  showPreview: true,
   activeDraftConnection: null,
 
   onNodesChange: (changes) => {
@@ -473,6 +476,10 @@ export const useGraphStore = create<GraphState>()(
 
   setEditorMode: (mode) => {
     set({ editorMode: mode });
+  },
+
+  setShowPreview: (show) => {
+    set({ showPreview: show });
   },
 
   setActiveDraftConnection: (conn) => {

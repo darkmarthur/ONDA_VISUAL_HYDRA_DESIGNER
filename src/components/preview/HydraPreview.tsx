@@ -14,12 +14,14 @@ export default function HydraPreview() {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
   const generatedCode = useGraphStore((s) => s.generatedCode);
+  const showPreview = useGraphStore((s) => s.showPreview);
+  const setShowPreview = useGraphStore((s) => s.setShowPreview);
   const setHydraError = useGraphStore((s) => s.setHydraError);
 
   // Initialize Hydra on mount
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || initializedRef.current) return;
+    if (!canvas || initializedRef.current || !showPreview) return;
 
     initializedRef.current = true;
     const runtime = getHydraRuntime();
@@ -41,7 +43,9 @@ export default function HydraPreview() {
 
     // Debounce evaluation slightly
     const timer = setTimeout(() => {
-      runtime.evaluate(generatedCode);
+      if (showPreview) {
+        runtime.evaluate(generatedCode);
+      }
     }, 150);
 
     return () => clearTimeout(timer);
@@ -74,13 +78,27 @@ export default function HydraPreview() {
   }, [handleResize]);
 
   return (
-    <div ref={containerRef} className="hydra-preview">
-      <canvas
-        ref={canvasRef}
-        className="hydra-preview__canvas"
-      />
+    <div ref={containerRef} className={`hydra-preview ${!showPreview ? 'hydra-preview--disabled' : ''}`}>
+      {showPreview ? (
+        <canvas
+          ref={canvasRef}
+          className="hydra-preview__canvas"
+        />
+      ) : (
+        <div className="hydra-preview__disabled-msg">
+          <span>Preview Disabled</span>
+          <small>Click the eye icon to enable</small>
+        </div>
+      )}
       <div className="hydra-preview__overlay">
         <span className="hydra-preview__badge">HYDRA LIVE</span>
+        <button 
+          className="hydra-preview__toggle"
+          onClick={() => setShowPreview(!showPreview)}
+          title={showPreview ? 'Disable Preview (Optimize)' : 'Enable Preview'}
+        >
+          {showPreview ? '👁' : '✕'}
+        </button>
       </div>
     </div>
   );

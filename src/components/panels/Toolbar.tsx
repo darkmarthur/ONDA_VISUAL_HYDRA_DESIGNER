@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useGraphStore } from '@/store/graphStore';
 
 export default function Toolbar() {
@@ -20,6 +20,7 @@ export default function Toolbar() {
 
   const savedPatches = getSavedPatches();
   const lastPatch = savedPatches.length > 0 ? savedPatches[savedPatches.length - 1] : null;
+  const liveWindowRef = useRef<Window | null>(null);
 
   const handleSave = () => {
     if (patchName.trim()) {
@@ -69,8 +70,18 @@ export default function Toolbar() {
   };
 
   const launchLiveWindow = () => {
-    window.open('/live', 'HydraLive', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-    setShowMenu(false);
+    if (liveWindowRef.current && !liveWindowRef.current.closed) {
+      liveWindowRef.current.focus();
+    } else {
+      liveWindowRef.current = window.open('/live', 'HydraLive', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+    }
+  };
+
+  const closeLiveWindow = () => {
+    if (liveWindowRef.current && !liveWindowRef.current.closed) {
+      liveWindowRef.current.close();
+      liveWindowRef.current = null;
+    }
   };
 
   return (
@@ -96,10 +107,21 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar__actions">
-        {/* Quick Launch Live Popup */}
-        <button className="toolbar__btn" onClick={launchLiveWindow} style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
-          ◱ Live Window
-        </button>
+        {/* Live Window Controls — Always Visible */}
+        <div className="toolbar__action-group toolbar__live-controls">
+          <button 
+            className="toolbar__btn toolbar__btn--live-show" 
+            onClick={launchLiveWindow}
+          >
+            ◱ Show Live
+          </button>
+          <button 
+            className="toolbar__btn toolbar__btn--live-hide"
+            onClick={closeLiveWindow}
+          >
+            ✕ Hide
+          </button>
+        </div>
 
         {/* Quick Load Last */}
         <button 

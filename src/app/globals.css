@@ -1226,6 +1226,9 @@ html, body {
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
 }
 
@@ -1240,6 +1243,52 @@ html, body {
   letter-spacing: 1px;
   color: white;
   animation: pulse-badge 2s ease-in-out infinite;
+}
+
+.hydra-preview__toggle {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  pointer-events: auto;
+}
+
+.hydra-preview__toggle:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+  transform: scale(1.1);
+}
+
+.hydra-preview__disabled-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-tertiary);
+  gap: 4px;
+}
+
+.hydra-preview__disabled-msg span {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.hydra-preview__disabled-msg small {
+  font-size: 10px;
 }
 
 @keyframes pulse-badge {
@@ -1431,4 +1480,40 @@ html, body {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.toolbar__live-controls {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 12px;
+}
+
+.toolbar__btn--live-show {
+  border: none !important;
+  border-radius: 0 !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: var(--accent-primary) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+.toolbar__btn--live-show:hover {
+  background: var(--accent-primary) !important;
+  color: white !important;
+}
+
+.toolbar__btn--live-hide {
+  border: none !important;
+  border-radius: 0 !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-tertiary) !important;
+  font-size: 10px !important;
+  padding: 0 10px !important;
+}
+
+.toolbar__btn--live-hide:hover {
+  background: var(--accent-red) !important;
+  color: white !important;
 }
