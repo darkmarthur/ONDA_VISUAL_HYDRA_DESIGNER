@@ -722,13 +722,21 @@ html, body {
   padding-left: 48px; /* Room for 'main / text' labels */
 }
 
+.hydra-node__params--constant {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  padding: 8px 12px !important;
+  overflow: visible !important;
+}
+
 .hydra-node__param-preview {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  min-height: 20px;
-  position: relative; /* Anchor for handles */
+  min-height: 24px; /* Slightly taller for better alignment */
+  position: relative !important; /* Anchor for handles */
   overflow: visible !important;
 }
 

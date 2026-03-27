@@ -66,24 +66,26 @@ function ConstantRow({ nodeId, name, value }: { nodeId: string; name: string; va
       <Handle
         type="source"
         position={Position.Right}
-        id={`value-out:${name}`}
+        id={`value-out:${name.replace(/\s+/g, '_')}`}
         className="hydra-handle"
-        style={{ top: '50%', right: -4, transform: 'translateY(-50%)' }}
+        style={{ top: '50%', right: -7, transform: 'translateY(-50%)' }}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();
           const active = state.activeDraftConnection;
+          const handleId = `value-out:${name.replace(/\s+/g, '_')}`;
+          
           if (active && active.handleType === 'target') {
             state.onConnect({
               source: nodeId,
-              sourceHandle: `value-out:${name}`,
+              sourceHandle: handleId,
               target: active.nodeId,
               targetHandle: active.handleId
             });
             state.setActiveDraftConnection(null);
           } else {
-            state.setActiveDraftConnection({ nodeId: nodeId, handleId: `value-out:${name}`, handleType: 'source' });
+            state.setActiveDraftConnection({ nodeId: nodeId, handleId: handleId, handleType: 'source' });
           }
         }}
       />

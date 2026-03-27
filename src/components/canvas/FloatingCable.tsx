@@ -1,3 +1,8 @@
+/**
+ * FloatingCable Component
+ * Draws a Bezier cable from a source handle to the mouse cursor during drafting.
+ */
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -5,24 +10,23 @@ import { useReactFlow, getBezierPath, useStore, Position } from '@xyflow/react';
 import { useGraphStore } from '@/store/graphStore';
 
 export default function FloatingCable() {
-  const { screenToFlowPosition, getNode } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
+  
+  // Get data from React Flow store
+  const transform = useStore((s) => s.transform);
+  const nodeLookup = useStore((s) => s.nodeLookup);
+  
+  // Get draft state from our store
   const activeDraft = useGraphStore((s) => s.activeDraftConnection);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   
-  // Get the current zoom and pan from React Flow store
-  const transform = useStore((s) => s.transform);
-
   useEffect(() => {
     if (!activeDraft) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Capture mouse position immediately
       const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       setMousePos(pos);
     };
-
-    // Initial capture
-    // setMousePos(screenToFlowPosition({ x: lastKnownX, y: lastKnownY })); // We don't have easy access here
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -30,34 +34,28 @@ export default function FloatingCable() {
 
   if (!activeDraft) return null;
 
-  const node = getNode(activeDraft.nodeId);
+  // Use XY Flow internals for pixel-perfect handle locating
+  const node = nodeLookup.get(activeDraft.nodeId);
   if (!node) return null;
 
+  const handleBounds = (node as any).internals?.handleBounds;
+  if (!handleBounds) return null;
+
+  // Find the exact handle being drafted (source or target)
   const isSource = activeDraft.handleType === 'source';
-  const isSecondary = activeDraft.handleId === 'texture-secondary';
-  const isCombine = (node.data as any).functionDef?.type === 'combine' || (node.data as any).functionDef?.type === 'combineCoord';
-  
-  // Calculate source/target in graph coordinates
-  const nodeX = node.position.x;
-  const nodeY = node.position.y;
-  
-  // Use measured dimensions if available, otherwise fallback to approximate defaults
-  const nodeW = node.measured?.width ?? 180;
-  const nodeH = node.measured?.height ?? 120;
+  const bounds = (handleBounds[isSource ? 'source' : 'target'] as any[])?.find(
+    (h) => h.id === activeDraft.handleId
+  );
 
-  // Exact handle locations in graph space
-  const handleX = isSource ? nodeX + nodeW : nodeX;
-  let handleY = nodeY + nodeH / 2;
-  
-  if (isSecondary) {
-    handleY = nodeY + nodeH * 0.75;
-  } else if (!isSource && isCombine) {
-    handleY = nodeY + nodeH * 0.45;
-  }
+  if (!bounds) return null;
 
-  // Source is ALWAYS the one on the LEFT visually for the Bezier path to work best
-  // If we drag from a source node, the 'source' of the path is the node.
-  // If we drag from a target node (backward), the 'source' of the path is the MOUSE.
+  // Precise coordinates for the handle center in graph space
+  const handleX = (node as any).internals.positionAbsolute.x + bounds.x + bounds.width / 2;
+  const handleY = (node as any).internals.positionAbsolute.y + bounds.y + bounds.height / 2;
+
+  // The Bezier path needs a start (source) and an end (target)
+  // If we start from a source handle, the target is the mouse.
+  // If we start from a target handle, the source is the mouse.
   const sourceX = isSource ? handleX : mousePos.x;
   const sourceY = isSource ? handleY : mousePos.y;
   const targetX = isSource ? mousePos.x : handleX;
@@ -72,8 +70,7 @@ export default function FloatingCable() {
     targetPosition: Position.Left,
   });
 
-  // We wrap the SVG in a div that follows the pane's transform
-  // to ensure the Bezier path is drawn in the correct coordinate system
+  // Apply the pane's transform to the SVG root
   const [tx, ty, zoom] = transform;
 
   return (
@@ -83,7 +80,7 @@ export default function FloatingCable() {
         width: '100%', 
         height: '100%', 
         pointerEvents: 'none', 
-        zIndex: 9999, // Ensure it's above handles and nodes
+        zIndex: 9999,
         top: 0,
         left: 0,
         transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
@@ -95,7 +92,7 @@ export default function FloatingCable() {
         d={edgePath}
         fill="none"
         stroke="#6366f1"
-        strokeWidth={3 / zoom} // Thicker line
+        strokeWidth={3 / zoom}
         strokeDasharray={`${6 / zoom},${4 / zoom}`}
         style={{ 
           opacity: 0.9,
