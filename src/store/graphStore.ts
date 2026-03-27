@@ -28,6 +28,7 @@ import {
 import { getHydraFunction, categoryMeta } from '@/hydra/registry';
 import { isValidConnection } from '@/hydra/validation';
 import { generateHydraCode } from '@/hydra/codegen';
+import { buildGraphFromCode } from '@/hydra/parser';
 
 interface GraphState {
   // ─── Core graph data ─────────────────────────────────────────────────────
@@ -531,8 +532,9 @@ export const useGraphStore = create<GraphState>()(
   },
 
   regenerateCode: () => {
-    const { nodes, edges } = get();
+    const { nodes, edges, generatedCode } = get();
     const code = generateHydraCode(nodes, edges);
+    if (code === generatedCode) return;
     set({ generatedCode: code });
     
     // External performance window sync
@@ -570,71 +572,34 @@ export const useGraphStore = create<GraphState>()(
   },
 
   updateGraphFromCode: (newCode) => {
-    // Sync parameter changes back to the graph from raw code editing
-    const nodes = get().nodes;
-    let updatedNodes = [...nodes];
-    
-    // To handle multiple identical functions, keep track of which occurrence we're matching
-    const funcOccurrences: Record<string, number> = {};
-    
-    // First let's extract all functions with their parameters in order
-    const fnRegex = /(\w+)\s*\(([^)]*)\)/g;
-    let match;
-    while ((match = fnRegex.exec(newCode)) !== null) {
-      const funcName = match[1];
-      const argsStr = match[2];
-      const args = argsStr.split(',').map(s => parseFloat(s.trim()));
-      
-      const occurrencesSoFar = funcOccurrences[funcName] || 0;
-      const matchingNodes = updatedNodes.filter(n => n.data.hydraFunction === funcName);
-      const nodeIndex = updatedNodes.findIndex(n => n.id === matchingNodes[Math.min(occurrencesSoFar, matchingNodes.length - 1)]?.id);
-      
-      if (nodeIndex >= 0) {
-        const node = updatedNodes[nodeIndex];
-        const newParams = { ...node.data.params };
-        
-        node.data.functionDef.params.forEach((paramDef, i) => {
-          if (args[i] !== undefined && !isNaN(args[i])) {
-            newParams[paramDef.name] = args[i];
-          }
-        });
-        
-        updatedNodes[nodeIndex] = {
-          ...node,
-          data: { ...node.data, params: newParams }
-        };
-      }
-      funcOccurrences[funcName] = occurrencesSoFar + 1;
-    }
-
-    // Now extract node aliases
-    // Looks for: // node_label: "my alias"\n.function(
-    const aliasOccurrences: Record<string, number> = {};
-    const aliasRegex = /\/\/\s*node_label:\s*"([^"]+)"\s*(?:\r\n|\n|\s)*\.?(\w+)\s*\(/g;
-    let aliasMatch;
-    while ((aliasMatch = aliasRegex.exec(newCode)) !== null) {
-      const alias = aliasMatch[1];
-      const fnName = aliasMatch[2];
-      
-      const occurrencesSoFar = aliasOccurrences[fnName] || 0;
-      const matchingNodes = updatedNodes.filter(n => n.data.hydraFunction === fnName);
-      const nodeIndex = updatedNodes.findIndex(n => n.id === matchingNodes[Math.min(occurrencesSoFar, matchingNodes.length - 1)]?.id);
-      
-      if (nodeIndex >= 0) {
-        updatedNodes[nodeIndex] = {
-           ...updatedNodes[nodeIndex],
-           data: { ...updatedNodes[nodeIndex].data, alias }
-        };
-      }
-      aliasOccurrences[fnName] = occurrencesSoFar + 1;
-    }
-    
-    set({ nodes: updatedNodes, generatedCode: newCode });
-    // Write to localStorage for the external live view window
+    if (newCode === get().generatedCode) return;
     try {
+      const { nodes: newNodes, edges: newEdges } = buildGraphFromCode(newCode, get().nodes);
+      
+      // Only perform structural update if we actually parsed something 
+      // or if the code is truly empty. This avoids wiping the canvas during mid-typing.
+      if (newNodes.length === 0 && newCode.trim().length > 5) {
+        set({ generatedCode: newCode });
+        return;
+      }
+
+      set({ 
+        nodes: newNodes, 
+        edges: newEdges.length > 0 ? newEdges : get().edges, // Fallback to avoid snapping edges during parse
+        generatedCode: newCode 
+      });
+
+      // Special case: if we have edges now, update them
+      if (newEdges.length > 0) {
+        set({ edges: newEdges });
+      }
+      
       localStorage.setItem('hydra-live-code', newCode);
       window.dispatchEvent(new Event('storage'));
-    } catch {}
+    } catch (err) {
+      // Keep code in sync even if parser fails mid-typing
+      set({ generatedCode: newCode });
+    }
   },
 
   setEditorMode: (mode) => {

@@ -89,13 +89,14 @@ function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
                   type="target"
                   position={Position.Left}
                   id={`param-in:${p.name}`}
-                  className="hydra-handle hydra-handle--param-in"
+                  className="hydra-handle"
                   title={`Bind ${p.name}`}
+                  onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
-                    const state=useGraphStore.getState();
-                    const active=state.activeDraftConnection;
-                    if (active&&active.handleType==='source'&&active.handleId?.startsWith('value-out')) {
+                    const state = useGraphStore.getState();
+                    const active = state.activeDraftConnection;
+                    if (active && active.handleType === 'source') {
                       state.onConnect({
                         source: active.nodeId,
                         sourceHandle: active.handleId,
@@ -111,15 +112,15 @@ function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
               )}
               <span className="hydra-node__param-name">{p.name}</span>
               <input
-                className={`hydra-node__param-input ${isBound? 'hydra-node__param-input--locked':''}`}
-                type={isBound? "text":"number"}
-                step={p.step||0.01}
-                value={isBound? "() =>":(data.params[p.name]??p.default)}
+                className={`hydra-node__param-input ${isBound ? 'hydra-node__param-input--locked' : ''}`}
+                type={isBound ? "text" : "number"}
+                step={p.step || 0.01}
+                value={isBound ? "() =>" : (data.params[p.name] ?? p.default)}
                 disabled={isBound}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   if (!isBound) {
-                    const val=parseFloat(e.target.value);
+                    const val = parseFloat(e.target.value);
                     if (!isNaN(val)) updateNodeParam(id, p.name, val);
                   }
                 }}
@@ -129,16 +130,39 @@ function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
         })}
       </div>
       <Handle
+        type="target"
+        position={Position.Left}
+        id="output-in"
+        className="hydra-handle"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          if (active && active.handleType === 'source') {
+            state.onConnect({
+              source: active.nodeId,
+              sourceHandle: active.handleId,
+              target: id,
+              targetHandle: 'output-in'
+            });
+            state.setActiveDraftConnection(null);
+          } else {
+            state.setActiveDraftConnection({ nodeId: id, handleId: 'output-in', handleType: 'target' });
+          }
+        }}
+      />
+      <Handle
         type="source"
         position={Position.Right}
         id="texture-out"
-        className="hydra-handle hydra-handle--texture-out"
+        className="hydra-handle"
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
-          const state=useGraphStore.getState();
-          const active=state.activeDraftConnection;
-
-          if (active&&active.handleType==='target') {
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          if (active && active.handleType === 'target') {
             state.onConnect({
               source: id,
               sourceHandle: 'texture-out',

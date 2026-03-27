@@ -47,7 +47,7 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         type="target"
         position={Position.Left}
         id="output-in"
-        className="hydra-handle hydra-handle--output-in"
+        className="hydra-handle"
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();

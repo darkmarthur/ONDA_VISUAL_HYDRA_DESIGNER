@@ -198,8 +198,9 @@ function HydraCanvasInner() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
-        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineType={ConnectionLineType.Bezier}
         connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 3 }}
+        connectOnClick={false}
         fitView
         snapToGrid
         snapGrid={[16, 16]}

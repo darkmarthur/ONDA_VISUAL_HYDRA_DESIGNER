@@ -42,7 +42,7 @@ export function isValidConnection(
   const targetData = targetNode.data;
 
   // Handle Parameter Bindings
-  const isValueSource = sourceHandle === 'value-out';
+  const isValueSource = sourceHandle?.startsWith('value-out');
   const isParamTarget = targetHandle.startsWith('param-in:');
 
   if (isValueSource) {

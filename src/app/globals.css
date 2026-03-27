@@ -2065,3 +2065,107 @@ html, body {
   opacity: 0.8;
   margin-top: 24px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONSTANT NODE REDESIGN (PREMIUM AESTHETIC)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.hydra-node--constant {
+  min-width: 170px !important;
+  border-color: rgba(234, 179, 8, 0.4) !important;
+}
+
+.hydra-node__params--constant {
+  padding: 4px 6px 10px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.hydra-node__param-preview--constant {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
+  padding: 4px 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  position: relative !important;
+  height: 32px !important;
+  overflow: visible !important;
+}
+
+.hydra-node__param-key-input {
+  background: transparent !important;
+  border: none !important;
+  color: #eab308 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  width: 65px !important;
+  outline: none !important;
+  padding: 0 !important;
+  opacity: 0.8;
+}
+
+.hydra-node__param-key-input:focus {
+  color: #fff !important;
+  opacity: 1;
+}
+
+.hydra-node__header-action {
+  background: rgba(234, 179, 8, 0.1) !important;
+  border: 1px solid rgba(234, 179, 8, 0.2) !important;
+  color: #eab308 !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  margin-left: auto !important;
+  padding: 0;
+}
+
+.hydra-node__header-action:hover {
+  background: #eab308 !important;
+  color: #000 !important;
+  transform: scale(1.1) !important;
+}
+
+.hydra-node__remove-var-btn {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.2) !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.2s !important;
+  margin-right: 4px;
+}
+
+.hydra-node__remove-var-btn:hover {
+  color: #ef4444 !important;
+}
+
+/* Ajuste de handles individuales por fila */
+.hydra-node__param-preview--constant .hydra-handle {
+  width: 9px !important;
+  height: 9px !important;
+  background: #eab308 !important;
+  border: 2px solid #0a0a0a !important;
+  right: -13px !important; /* Salir del nodo para alinearse con la fila */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.4) !important;
+  border-radius: 50% !important;
+}
+
+.hydra-node__param-preview--constant .hydra-handle:hover {
+  transform: translateY(-50%) scale(1.3) !important;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.7) !important;
+}
