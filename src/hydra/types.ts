@@ -10,6 +10,8 @@
  *   - combineCoord: Modulates coordinates using a texture (vec2, vec4 → vec2), requires secondary texture
  */
 
+import { Node, Edge } from '@xyflow/react';
+
 // ─── Hydra internal function type ────────────────────────────────────────────
 export type HydraFunctionType = 'src' | 'coord' | 'color' | 'combine' | 'combineCoord' | 'util' | 'ext';
 
@@ -95,6 +97,15 @@ export interface SerializedPatch {
   nodes: SerializedNode[];
   edges: SerializedEdge[];
   viewport: { x: number; y: number; zoom: number };
+}
+
+export interface ProjectTab {
+  id: string;
+  name: string;
+  nodes: Node<HydraNodeData>[];
+  edges: Edge[];
+  code: string;
+  isLive?: boolean;
 }
 
 export interface SerializedNode {

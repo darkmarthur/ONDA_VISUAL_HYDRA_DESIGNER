@@ -16,6 +16,7 @@ import Toolbar from './panels/Toolbar';
 import TabMenu from './panels/TabMenu';
 import Footer from './panels/Footer';
 import MobileWarning from './panels/MobileWarning';
+import TabsPanel from './panels/TabsPanel';
 
 export default function HydraEditor() {
   const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string; position?: { x: number; y: number } }>({ open: false });
@@ -79,13 +80,17 @@ export default function HydraEditor() {
 
         {/* Center — Canvas or Code */}
         <div className="editor__center">
-          <div style={{ display: editorMode === 'visual' ? 'flex' : 'none', flex: 1, width: '100%', height: '100%' }}>
+          <TabsPanel />
+          <div style={{ display: editorMode === 'visual' ? 'flex' : 'none', flex: 1, width: '100%', height: 'calc(100% - 34px)' }}>
             <HydraCanvas />
           </div>
           {editorMode === 'code' && (
-            <CodePanel />
+            <div style={{ height: 'calc(100% - 34px)', width: '100%' }}>
+              <CodePanel />
+            </div>
           )}
         </div>
+        
 
         {/* Right panel — Inspector + Preview + Code */}
         <div className="editor__right">

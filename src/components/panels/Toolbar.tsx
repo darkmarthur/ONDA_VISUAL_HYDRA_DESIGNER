@@ -15,7 +15,8 @@ import {
   Download,
   Upload,
   Hexagon,
-  Globe
+  Globe,
+  Plus
 } from 'lucide-react';
 
 export default function Toolbar() {

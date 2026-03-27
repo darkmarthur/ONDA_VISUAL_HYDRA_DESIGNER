@@ -101,6 +101,12 @@ function buildNodeExpression(
   const alias = node.data.alias;
 
   const paramsData = { values: node.data.params, bindings: node.data.bindings || {} };
+  
+  if (!fnDef) {
+    console.warn(`Codegen: Node ${nodeId} is missing functionDef for ${fnName}`);
+    return `/* Missing: ${fnName} */`;
+  }
+
   const paramStr = buildParamString(fnDef.params, paramsData, nodes);
 
   const formatAlias = (prefix: string) => {
