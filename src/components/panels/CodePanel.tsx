@@ -49,7 +49,7 @@ export default function CodePanel() {
         value={generatedCode}
         onChange={(e) => updateGraphFromCode(e.target.value)}
         spellCheck={false}
-        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit', resize: 'vertical' }}
+        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit' }}
       />
       {hydraError && (
         <div className="code-panel__error">

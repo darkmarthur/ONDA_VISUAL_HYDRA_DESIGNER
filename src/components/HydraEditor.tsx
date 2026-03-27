@@ -66,7 +66,7 @@ export default function HydraEditor() {
 
       <div className="editor__body">
         {/* Left panel — Node library */}
-        <NodeLibrary />
+        {editorMode === 'visual' && <NodeLibrary />}
 
         {/* Center — Canvas or Code */}
         <div className="editor__center">
@@ -84,7 +84,7 @@ export default function HydraEditor() {
             <HydraPreview />
           </div>
 
-          <Inspector />
+          {editorMode === 'visual' && <Inspector />}
         </div>
       </div>
 

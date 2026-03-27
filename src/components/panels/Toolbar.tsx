@@ -11,6 +11,8 @@ export default function Toolbar() {
   const serializeGraph = useGraphStore((s) => s.serializeGraph);
   const deserializeGraph = useGraphStore((s) => s.deserializeGraph);
   const updateGraphFromCode = useGraphStore((s) => s.updateGraphFromCode);
+  const editorMode = useGraphStore((s) => s.editorMode);
+  const setEditorMode = useGraphStore((s) => s.setEditorMode);
 
   const [showSave, setShowSave] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -52,7 +54,7 @@ export default function Toolbar() {
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
-        const graphMatch = text.match(/\/\/ ==BEGIN_GRAPH==\s*\/\/\s*(.*?)\s*\/\/ ==END_GRAPH==/s);
+        const graphMatch = text.match(/\/\/ ==BEGIN_GRAPH==\s*\/\/\s*([\s\S]*?)\s*\/\/ ==END_GRAPH==/);
         if (graphMatch && graphMatch[1]) {
           deserializeGraph(graphMatch[1]);
         } else {
@@ -76,7 +78,21 @@ export default function Toolbar() {
       <div className="toolbar__brand">
         <span className="toolbar__logo">◈</span>
         <h1 className="toolbar__title">HYDRA DESIGNER</h1>
-        <span className="toolbar__subtitle">Visual Patch Editor</span>
+      </div>
+
+      <div className="toolbar__mode-switch">
+        <button
+          className={`toolbar__btn toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
+          onClick={() => setEditorMode('visual')}
+        >
+          Visual Editor
+        </button>
+        <button
+          className={`toolbar__btn toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
+          onClick={() => setEditorMode('code')}
+        >
+          Code Editor
+        </button>
       </div>
 
       <div className="toolbar__actions">
