@@ -17,7 +17,8 @@ export default function HydraPreview() {
   const generatedCode = useGraphStore((s) => s.generatedCode);
   const showPreview = useGraphStore((s) => s.showPreview);
   const setShowPreview = useGraphStore((s) => s.setShowPreview);
-  const setHydraError = useGraphStore((s) => s.setHydraError);
+  const addHydraLog = useGraphStore((s) => s.addHydraLog);
+  const clearHydraLogs = useGraphStore((s) => s.clearHydraLogs);
 
   // Initialize Hydra on mount
   useEffect(() => {
@@ -28,14 +29,16 @@ export default function HydraPreview() {
     const runtime = getHydraRuntime();
 
     runtime.initialize(canvas, (error) => {
-      setHydraError(error);
+      if (error) {
+        addHydraLog('error', error);
+      }
     });
 
     return () => {
       runtime.destroy();
       initializedRef.current = false;
     };
-  }, [setHydraError]);
+  }, [addHydraLog, showPreview]);
 
   // Evaluate code changes
   useEffect(() => {

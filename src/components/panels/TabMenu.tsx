@@ -122,7 +122,12 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
     const y = spawnPosition?.y ?? (window.innerHeight / 2 - 50 + offset);
 
     if (activeDraftConnection) {
-      addAndConnectNode(fn.name, { x, y }, activeDraftConnection);
+      if (fn.isOutput) {
+        const { addAndConnectOutputNode } = require('@/store/graphStore');
+        addAndConnectOutputNode(fn.buffer as any, { x, y }, activeDraftConnection);
+      } else {
+        addAndConnectNode(fn.name, { x, y }, activeDraftConnection);
+      }
       setActiveDraftConnection(null);
       onClose();
       return;

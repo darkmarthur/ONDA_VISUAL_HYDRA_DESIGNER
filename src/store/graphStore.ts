@@ -34,6 +34,7 @@ interface GraphState {
   editorMode: 'visual' | 'code';
   showPreview: boolean;
   showMiniMap: boolean;
+  hydraLogs: { type: 'error' | 'info'; message: string; timestamp: number }[];
   activeDraftConnection: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null;
 
   // ─── Actions ─────────────────────────────────────────────────────────────
@@ -55,6 +56,8 @@ interface GraphState {
   setEditorMode: (mode: 'visual' | 'code') => void;
   setShowPreview: (show: boolean) => void;
   setShowMiniMap: (show: boolean) => void;
+  addHydraLog: (type: 'error' | 'info', message: string) => void;
+  clearHydraLogs: () => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   serializeGraph: () => string;
@@ -86,6 +89,7 @@ export const useGraphStore = create<GraphState>()(
   editorMode: 'visual',
   showPreview: true,
   showMiniMap: true,
+  hydraLogs: [],
   activeDraftConnection: null,
 
   onNodesChange: (changes) => {
@@ -488,6 +492,18 @@ export const useGraphStore = create<GraphState>()(
   setShowMiniMap: (show) => {
     set({ showMiniMap: show });
   },
+  addHydraLog: (type, message) => {
+    set((s) => ({
+      hydraLogs: [
+        { type, message, timestamp: Date.now() },
+        ...s.hydraLogs.slice(0, 49) // Keep last 50
+      ],
+      hydraError: type === 'error' ? message : s.hydraError
+    }));
+  },
+  clearHydraLogs: () => {
+    set({ hydraLogs: [], hydraError: null });
+  },
   setActiveDraftConnection: (conn) => {
     set({ activeDraftConnection: conn });
   },
@@ -632,4 +648,50 @@ export function addOutputNode(
   };
 
   useGraphStore.setState((state) => ({ nodes: [...state.nodes, newNode] }));
+}
+
+export function addAndConnectOutputNode(
+  buffer: HydraOutput,
+  position: { x: number; y: number },
+  connectFrom: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null },
+): void {
+  const bufferIndex = parseInt(buffer.slice(1), 10);
+  const newNodeId = generateNodeId();
+
+  const newNode: Node<HydraNodeData> = {
+    id: newNodeId,
+    type: 'hydraOutput',
+    position,
+    data: {
+      hydraFunction: 'out',
+      functionDef: {
+        name: 'out',
+        type: 'src',
+        category: 'output',
+        params: [],
+      },
+      params: { buffer: bufferIndex },
+      label: `out(${buffer})`,
+      nodeType: 'output',
+    },
+  };
+
+  let newEdge: Edge | null = null;
+
+  if (connectFrom.handleType === 'source') {
+    newEdge = {
+      id: `e-${connectFrom.nodeId}-${newNodeId}`,
+      source: connectFrom.nodeId,
+      sourceHandle: connectFrom.handleId,
+      target: newNodeId,
+      targetHandle: 'output-in',
+      animated: true,
+      style: { stroke: '#ef4444', strokeWidth: 2 },
+    };
+  }
+
+  useGraphStore.setState((state) => ({ 
+    nodes: [...state.nodes, newNode],
+    edges: newEdge ? [...state.edges, newEdge] : state.edges 
+  }));
 }
