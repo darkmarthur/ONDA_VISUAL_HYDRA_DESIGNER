@@ -36,6 +36,7 @@ interface GraphState {
   showMiniMap: boolean;
   hydraLogs: { type: 'error' | 'info'; message: string; timestamp: number }[];
   activeDraftConnection: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null;
+  autosaveEnabled: boolean;
 
   // ─── Actions ─────────────────────────────────────────────────────────────
   onNodesChange: (changes: NodeChange<Node<HydraNodeData>>[]) => void;
@@ -58,6 +59,8 @@ interface GraphState {
   setShowMiniMap: (show: boolean) => void;
   addHydraLog: (type: 'error' | 'info', message: string) => void;
   clearHydraLogs: () => void;
+  setAutosaveEnabled: (enabled: boolean) => void;
+  loadAutosave: () => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   addOutputNode: (buffer: HydraOutput, position: { x: number; y: number }) => void;
@@ -94,6 +97,7 @@ export const useGraphStore = create<GraphState>()(
   showMiniMap: true,
   hydraLogs: [],
   activeDraftConnection: null,
+  autosaveEnabled: true,
 
   onNodesChange: (changes) => {
     set((state) => ({
@@ -409,12 +413,39 @@ export const useGraphStore = create<GraphState>()(
     const { nodes, edges } = get();
     const code = generateHydraCode(nodes, edges);
     set({ generatedCode: code });
-    // Write to localStorage for the external live view window
+    
+    // External performance window sync
+    localStorage.setItem('hydra-live-code', code);
+    // Dispatch storage event manually for same-window popups
+    window.dispatchEvent(new Event('storage'));
+
+    // Autosave logic
+    if (get().autosaveEnabled) {
+      const json = get().serializeGraph();
+      localStorage.setItem('hydra-autosave', json);
+    }
+  },
+
+  setAutosaveEnabled: (enabled) => {
+    set({ autosaveEnabled: enabled });
+    if (enabled) {
+      const json = get().serializeGraph();
+      localStorage.setItem('hydra-autosave', json);
+    } else {
+      localStorage.removeItem('hydra-autosave');
+    }
+  },
+
+  loadAutosave: () => {
     try {
-      localStorage.setItem('hydra-live-code', code);
-      // Dispatch storage event manually for same-window popups
-      window.dispatchEvent(new Event('storage'));
-    } catch {}
+      const saved = localStorage.getItem('hydra-autosave');
+      if (saved) {
+        get().deserializeGraph(saved);
+        get().addHydraLog('info', 'Last session restored from autosave');
+      }
+    } catch (err) {
+      console.error('Failed to load autosave:', err);
+    }
   },
 
   updateGraphFromCode: (newCode) => {

@@ -60,6 +60,9 @@ export default function HydraEditor() {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('open-tab-menu', handleCustomMenu);
+    
+    useGraphStore.getState().loadAutosave();
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('open-tab-menu', handleCustomMenu);

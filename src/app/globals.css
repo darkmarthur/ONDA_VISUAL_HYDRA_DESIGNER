@@ -1805,6 +1805,66 @@ html, body {
   margin-top: -8px;
 }
 
+.toolbar__subtitle {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* ─── Autosave Toggle ─── */
+.toolbar__setting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+.toolbar__setting-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.toolbar__toggle {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background-color: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  padding: 0;
+}
+
+.toolbar__toggle--active {
+  background-color: var(--accent-primary-dim);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+.toolbar__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background-color: var(--text-tertiary);
+  border-radius: 50%;
+  transition: all var(--transition-normal);
+}
+
+.toolbar__toggle--active .toolbar__toggle-thumb {
+  left: 16px;
+  background-color: white;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
 .mobile-warning__brand {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1813,4 +1873,3 @@ html, body {
   opacity: 0.8;
   margin-top: 24px;
 }
-

@@ -28,6 +28,8 @@ export default function Toolbar() {
   const updateGraphFromCode=useGraphStore((s) => s.updateGraphFromCode);
   const editorMode=useGraphStore((s) => s.editorMode);
   const setEditorMode=useGraphStore((s) => s.setEditorMode);
+  const autosaveEnabled=useGraphStore((s) => s.autosaveEnabled);
+  const setAutosaveEnabled=useGraphStore((s) => s.setAutosaveEnabled);
 
   const [showSave, setShowSave]=useState(false);
   const [showMenu, setShowMenu]=useState(false);
@@ -103,8 +105,8 @@ export default function Toolbar() {
     <header className="toolbar">
       <div className="toolbar__brand">
         <div className="toolbar__brand-group">
-          <h1 className="toolbar__title">HYDRA｜DESIGNER</h1>
-          <span className="toolbar__subtitle">BETA v0.1</span>
+          <h1 className="toolbar__title">ONDA｜HYDRA</h1>
+          <span className="toolbar__subtitle">Professional v2.0</span>
         </div>
       </div>
 
@@ -240,8 +242,19 @@ export default function Toolbar() {
 
         <div className="toolbar__divider" />
 
-        {/* Group 4: Performance / Reset */}
+        {/* Group 5: Settings / Safety */}
         <div className="toolbar__group">
+          <div className="toolbar__setting">
+             <span className="toolbar__setting-label">Autosave</span>
+             <button
+               className={`toolbar__toggle ${autosaveEnabled ? 'toolbar__toggle--active' : ''}`}
+               onClick={() => setAutosaveEnabled(!autosaveEnabled)}
+               title={autosaveEnabled ? "Autosave is ON" : "Autosave is OFF"}
+             >
+               <div className="toolbar__toggle-thumb" />
+             </button>
+          </div>
+
           <button
             className="toolbar__btn toolbar__btn--danger"
             onClick={() => {
