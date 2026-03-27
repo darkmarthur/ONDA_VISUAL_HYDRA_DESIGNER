@@ -57,6 +57,8 @@ interface GraphState {
   setSelectedNode: (nodeId: string | null) => void;
   removeEdge: (edgeId: string) => void;
   updateNodeParam: (nodeId: string, paramName: string, value: number | string) => void;
+  removeNodeParam: (nodeId: string, paramName: string) => void;
+  renameNodeParam: (nodeId: string, oldName: string, newName: string) => void;
   updateNodeBinding: (nodeId: string, paramName: string, binding: Partial<HydraParamBinding>) => void;
   updateOutputBuffer: (nodeId: string, buffer: number) => void;
   setHydraError: (error: string | null) => void;
@@ -451,6 +453,37 @@ export const useGraphStore = create<GraphState>()(
     }));
     get().regenerateCode();
   },
+  removeNodeParam: (nodeId, paramName) => {
+    set((state) => ({
+      nodes: state.nodes.map((n) => {
+        if (n.id === nodeId) {
+          const newParams = { ...n.data.params };
+          delete newParams[paramName];
+          return { ...n, data: { ...n.data, params: newParams } };
+        }
+        return n;
+      }),
+    }));
+    get().regenerateCode();
+  },
+
+  renameNodeParam: (nodeId, oldName, newName) => {
+    set((state) => ({
+      nodes: state.nodes.map((n) => {
+        if (n.id === nodeId) {
+          const newParams = { ...n.data.params };
+          if (newParams[oldName] !== undefined && oldName !== newName) {
+            newParams[newName] = newParams[oldName];
+            delete newParams[oldName];
+          }
+          return { ...n, data: { ...n.data, params: newParams } };
+        }
+        return n;
+      }),
+    }));
+    get().regenerateCode();
+  },
+
 
   updateNodeBinding: (nodeId, paramName, binding) => {
     set((state) => ({

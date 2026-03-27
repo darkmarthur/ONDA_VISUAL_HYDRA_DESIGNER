@@ -262,6 +262,11 @@ function getBoundParamValue(binding: any, nodes: Node<HydraNodeData>[]): string 
       return `() => a.fft[${bin}]`;
     }
 
+    if (fn === 'constant') {
+      const key = binding.outputKey || Object.keys(params)[0];
+      return `() => ${params[key] ?? 0}`;
+    }
+
     if (fn === 'sin' || fn === 'cos') {
       const val = getInnerParamValue('value', params.value, innerBindings.value, nodes);
       const mult = getInnerParamValue('mult', params.mult ?? 1, innerBindings.mult, nodes);

@@ -653,6 +653,15 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     ],
   },
   {
+    name: 'constant',
+    type: 'util',
+    category: 'value',
+    description: 'Static values or variables to be shared.',
+    params: [
+      { name: 'value', type: 'float', default: 1.0 },
+    ],
+  },
+  {
     name: 'setSmooth',
     type: 'util',
     category: 'audio',
