@@ -33,6 +33,7 @@ interface GraphState {
   hydraError: string | null;
   editorMode: 'visual' | 'code';
   showPreview: boolean;
+  showMiniMap: boolean;
   activeDraftConnection: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null;
 
   // ─── Actions ─────────────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ interface GraphState {
   updateGraphFromCode: (newCode: string) => void;
   setEditorMode: (mode: 'visual' | 'code') => void;
   setShowPreview: (show: boolean) => void;
+  setShowMiniMap: (show: boolean) => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   serializeGraph: () => string;
@@ -83,6 +85,7 @@ export const useGraphStore = create<GraphState>()(
   hydraError: null,
   editorMode: 'visual',
   showPreview: true,
+  showMiniMap: true,
   activeDraftConnection: null,
 
   onNodesChange: (changes) => {
@@ -482,6 +485,9 @@ export const useGraphStore = create<GraphState>()(
     set({ showPreview: show });
   },
 
+  setShowMiniMap: (show) => {
+    set({ showMiniMap: show });
+  },
   setActiveDraftConnection: (conn) => {
     set({ activeDraftConnection: conn });
   },

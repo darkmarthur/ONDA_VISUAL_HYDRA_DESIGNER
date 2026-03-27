@@ -21,6 +21,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import { Activity, Box, Map } from 'lucide-react';
 import SourceNode from './nodes/SourceNode';
 import TransformNode from './nodes/TransformNode';
 import OutputNode from './nodes/OutputNode';
@@ -48,6 +49,8 @@ function HydraCanvasInner() {
   const removeEdge = useGraphStore((s) => s.removeEdge);
   const setActiveDraftConnection = useGraphStore((s) => s.setActiveDraftConnection);
   const activeDraftConnection = useGraphStore((s) => s.activeDraftConnection);
+  const showMiniMap = useGraphStore((s) => s.showMiniMap);
+  const setShowMiniMap = useGraphStore((s) => s.setShowMiniMap);
 
   const [edgeMenu, setEdgeMenu] = React.useState<{ id: string; x: number; y: number } | null>(null);
 
@@ -202,17 +205,28 @@ function HydraCanvasInner() {
         <Controls
           showInteractive={false}
           className="hydra-controls"
-        />
-        <MiniMap
-          nodeColor={(node) => {
-            const data = node.data as unknown as HydraNodeData;
-            if (data?.nodeType === 'output') return '#ef4444';
-            if (data?.nodeType === 'source') return '#f472b6';
-            return '#60a5fa';
-          }}
-          maskColor="rgba(0,0,0,0.7)"
-          className="hydra-minimap"
-        />
+        >
+          <button
+            className="react-flow__controls-button"
+            onClick={() => setShowMiniMap(!showMiniMap)}
+            title={showMiniMap ? "Hide MiniMap" : "Show MiniMap"}
+          >
+            <Map size={14} style={{ opacity: showMiniMap ? 1 : 0.4 }} />
+          </button>
+        </Controls>
+
+        {showMiniMap && (
+          <MiniMap
+            nodeColor={(node) => {
+              const data = node.data as unknown as HydraNodeData;
+              if (data?.nodeType === 'output') return '#ef4444';
+              if (data?.nodeType === 'source') return '#f472b6';
+              return '#60a5fa';
+            }}
+            maskColor="rgba(0,0,0,0.7)"
+            className="hydra-minimap"
+          />
+        )}
         
         <FloatingCable />
 
