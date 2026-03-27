@@ -734,6 +734,35 @@ html, body {
   font-weight: 500;
 }
 
+.hydra-node__param-input {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  width: 50px;
+  text-align: right;
+  padding: 1px 4px;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.hydra-node__param-input:hover {
+  border-color: var(--border-strong);
+}
+
+.hydra-node__param-input:focus {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+.hydra-node__param-input::-webkit-inner-spin-button,
+.hydra-node__param-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .hydra-node__param-more {
   font-size: 9px;
   color: var(--text-tertiary);
@@ -1612,6 +1641,9 @@ html, body {
   align-items: center;
   white-space: nowrap;
   min-width: max-content;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
 }
 
 .footer__text {

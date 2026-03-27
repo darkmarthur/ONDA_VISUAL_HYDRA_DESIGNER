@@ -141,21 +141,6 @@ export default function Inspector() {
         </div>
       </div>
 
-      <div className="inspector__params inspector__pedagogy">
-        <h4 className="inspector__section-title">Base Signature</h4>
-        <pre className="inspector__snippet-block">{getCanonicalSignature()}</pre>
-        
-        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Current Snippet</h4>
-        <pre className="inspector__snippet-block inspector__snippet-block--current">{getCurrentSnippet()}</pre>
-        
-        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Example Usage</h4>
-        <pre className="inspector__snippet-block inspector__snippet-block--example">{getExampleUsage()}</pre>
-        
-        <p className="inspector__hint" style={{ marginTop: '8px' }}>
-          Hydra parameters accept dynamic inputs such as: <code>10</code>, <code>[10, 20]</code>, <code>() =&gt; time</code>, <code>() =&gt; mouse.x</code>, <code>() =&gt; a.fft[0]</code>
-        </p>
-      </div>
-
       {!isOutput && data.functionDef.params.length > 0 && (
         <div className="inspector__params">
           <h4 className="inspector__section-title">Parameters</h4>
@@ -218,6 +203,21 @@ export default function Inspector() {
           </p>
         </div>
       )}
+
+      <div className="inspector__params inspector__pedagogy">
+        <h4 className="inspector__section-title">Base Signature</h4>
+        <pre className="inspector__snippet-block">{getCanonicalSignature()}</pre>
+        
+        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Current Snippet</h4>
+        <pre className="inspector__snippet-block inspector__snippet-block--current">{getCurrentSnippet()}</pre>
+        
+        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Example Usage</h4>
+        <pre className="inspector__snippet-block inspector__snippet-block--example">{getExampleUsage()}</pre>
+        
+        <p className="inspector__hint" style={{ marginTop: '8px' }}>
+          Hydra parameters accept dynamic inputs such as: <code>10</code>, <code>[10, 20]</code>, <code>() =&gt; time</code>, <code>() =&gt; mouse.x</code>, <code>() =&gt; a.fft[0]</code>
+        </p>
+      </div>
 
       <div className="inspector__actions">
         <button

@@ -15,6 +15,7 @@ import { useGraphStore } from '@/store/graphStore';
 function SourceNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) {
   const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
   const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
+  const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
   const meta = categoryMeta[data.functionDef.category];
 
   const [isEditingAlias, setIsEditingAlias] = useState(false);
@@ -76,19 +77,22 @@ function SourceNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         {!data.alias && !isEditingAlias && <span className="hydra-node__category">{meta?.label || 'Source'}</span>}
       </div>
       <div className="hydra-node__params">
-        {data.functionDef.params.slice(0, 3).map((p) => (
+        {data.functionDef.params.map((p) => (
           <div key={p.name} className="hydra-node__param-preview">
             <span className="hydra-node__param-name">{p.name}</span>
-            <span className="hydra-node__param-value">
-              {(data.params[p.name] ?? p.default).toFixed(2)}
-            </span>
+            <input
+              className="hydra-node__param-input"
+              type="number"
+              step={p.step || 0.01}
+              value={data.params[p.name] ?? p.default}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) updateNodeParam(id, p.name, val);
+              }}
+            />
           </div>
         ))}
-        {data.functionDef.params.length > 3 && (
-          <div className="hydra-node__param-more">
-            +{data.functionDef.params.length - 3} more
-          </div>
-        )}
       </div>
       <Handle
         type="source"
