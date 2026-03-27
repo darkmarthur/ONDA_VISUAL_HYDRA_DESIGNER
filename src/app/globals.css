@@ -865,7 +865,7 @@ html, body {
 }
 
 .hydra-canvas .react-flow__edge-path {
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 .hydra-canvas .react-flow__connection-line {

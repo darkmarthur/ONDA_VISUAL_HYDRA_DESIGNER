@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useReactFlow, getBezierPath, useStore } from '@xyflow/react';
+import { useReactFlow, getBezierPath, useStore, Position } from '@xyflow/react';
 import { useGraphStore } from '@/store/graphStore';
 
 export default function FloatingCable() {
@@ -27,17 +27,19 @@ export default function FloatingCable() {
   if (!activeDraft) return null;
 
   const node = getNode(activeDraft.nodeId);
-  if (!node || !node.measured) return null;
+  if (!node) return null;
 
   const isSource = activeDraft.handleType === 'source';
   const isSecondary = activeDraft.handleId === 'texture-secondary';
-  const isCombine = (node.data as any).functionDef?.type.startsWith('combine');
+  const isCombine = (node.data as any).functionDef?.type === 'combine' || (node.data as any).functionDef?.type === 'combineCoord';
   
   // Calculate source/target in graph coordinates
   const nodeX = node.position.x;
   const nodeY = node.position.y;
-  const nodeW = node.measured.width || 0;
-  const nodeH = node.measured.height || 0;
+  
+  // Use measured dimensions if available, otherwise fallback to approximate defaults
+  const nodeW = node.measured?.width ?? 180;
+  const nodeH = node.measured?.height ?? 120;
 
   // Exact handle locations in graph space
   const handleX = isSource ? nodeX + nodeW : nodeX;
@@ -58,8 +60,10 @@ export default function FloatingCable() {
   const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
+    sourcePosition: isSource ? Position.Right : Position.Left,
     targetX,
     targetY,
+    targetPosition: isSource ? Position.Left : Position.Right,
   });
 
   // We wrap the SVG in a div that follows the pane's transform
@@ -73,20 +77,24 @@ export default function FloatingCable() {
         width: '100%', 
         height: '100%', 
         pointerEvents: 'none', 
-        zIndex: 1000,
+        zIndex: 9999, // Ensure it's above handles and nodes
         top: 0,
         left: 0,
         transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
-        transformOrigin: '0 0'
+        transformOrigin: '0 0',
+        overflow: 'visible'
       }}
     >
       <path
         d={edgePath}
         fill="none"
         stroke="#6366f1"
-        strokeWidth={2 / zoom} // Keep stroke width consistent regardless of zoom
-        strokeDasharray={`${5 / zoom},${5 / zoom}`}
-        style={{ opacity: 0.8 }}
+        strokeWidth={3 / zoom} // Thicker line
+        strokeDasharray={`${6 / zoom},${4 / zoom}`}
+        style={{ 
+          opacity: 0.9,
+          filter: 'drop-shadow(0 0 4px rgba(99, 102, 241, 0.4))' 
+        }}
       />
     </svg>
   );

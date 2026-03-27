@@ -17,6 +17,7 @@ import {
   NodeTypes,
   Edge,
   OnConnectStartParams,
+  ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -178,6 +179,8 @@ function HydraCanvasInner() {
         onEdgeDoubleClick={onEdgeDoubleClick}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 3 }}
         fitView
         snapToGrid
         snapGrid={[16, 16]}
