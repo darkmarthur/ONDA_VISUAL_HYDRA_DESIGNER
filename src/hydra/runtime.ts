@@ -42,13 +42,22 @@ export class HydraRuntime {
     }
   }
 
+  /**
+   * Execute Hydra code string in the synth context.
+   */
   evaluate(code: string): void {
     if (!this.hydraInstance) {
       this.reportError('Hydra not initialized');
       return;
     }
 
-    if (!code || code.trim().length < 2) return;
+    const trimmedCode = code?.trim() || '';
+    // Only skip if truly empty or a generic placeholder
+    if (!trimmedCode || 
+        trimmedCode === '// Add nodes and connect them to generate Hydra code' ||
+        trimmedCode === '// Connect nodes to build a visual chain') {
+      return;
+    }
 
     // Don't re-evaluate identical code
     if (code === this.lastCode) return;
@@ -59,9 +68,6 @@ export class HydraRuntime {
 
       // Expose EVERY global function from the synth to the eval scope
       const evalContext: Record<string, any> = {};
-      
-      // Hydra exposes its functions on the synth object
-      // We grab everything that looks like a function or a buffer
       const keys = Object.keys(synth);
       for (const key of keys) {
          if (typeof synth[key] === 'function') {
@@ -71,13 +77,9 @@ export class HydraRuntime {
          }
       }
 
-      // Also ensure standard 'time' and 'mouse' are available
       evalContext.time = synth.time ?? 0;
       evalContext.mouse = synth.mouse || { x: 0, y: 0 };
       
-      // Inject speed correction: if code contains "speed =" we should treat it as setting the synth speed
-      // but only if it's top-level. For now, we trust the standard Hydra behavior.
-
       const contextKeys = Object.keys(evalContext);
       const contextValues = contextKeys.map(k => evalContext[k]);
 
@@ -87,7 +89,6 @@ export class HydraRuntime {
         fn(...contextValues);
         this.reportError(null);
       } catch (innerErr: any) {
-        // This is where syntax errors from the user's manual typing usually hit
         this.reportError(innerErr.message);
       }
     } catch (err: any) {
@@ -112,8 +113,6 @@ export class HydraRuntime {
   destroy(): void {
     if (this.hydraInstance) {
       this.hush();
-      // Hydra-synth doesn't have a formal destroy, but we can stop its loop if possible
-      // Usually clearing the context is enough for GC
       this.hydraInstance = null;
     }
   }

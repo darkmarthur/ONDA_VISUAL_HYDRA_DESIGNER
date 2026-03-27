@@ -21,8 +21,6 @@ import {
   HydraNodeData, 
   HydraNodeType, 
   HydraOutput, 
-  HydraParamDef, 
-  SerializedPatch,
   HydraParamBinding
 } from '@/hydra/types';
 import { getHydraFunction, categoryMeta } from '@/hydra/registry';
@@ -86,7 +84,7 @@ interface GraphState {
 let nodeIdCounter = 0;
 
 function generateNodeId(): string {
-  return `node_${Date.now()}_${nodeIdCounter++}`;
+  return `node_${Date.now()}_${nodeIdCounter++}_${Math.floor(Math.random() * 1000)}`;
 }
 
 function determineNodeType(fnDef: { name: string; type: string; category: string }): HydraNodeType {
@@ -94,6 +92,17 @@ function determineNodeType(fnDef: { name: string; type: string; category: string
   if (fnDef.category === 'value' || fnDef.category === 'math') return 'value';
   if (fnDef.type === 'src') return 'source';
   return 'transform';
+}
+
+/**
+ * Deduplicates an array of nodes or edges by ID.
+ */
+function deduplicate<T extends { id: string }>(items: T[]): T[] {
+  const map = new Map<string, T>();
+  items.forEach(item => {
+    if (!map.has(item.id)) map.set(item.id, item);
+  });
+  return Array.from(map.values());
 }
 
 export const useGraphStore = create<GraphState>()(
@@ -112,11 +121,11 @@ export const useGraphStore = create<GraphState>()(
   autosaveEnabled: true,
 
   onNodesChange: (changes) => {
-    set((state) => ({
-      nodes: applyNodeChanges(changes, state.nodes) as Node<HydraNodeData>[],
-    }));
-    // Regenerate code after positional changes settle
-    // (we skip this for position-only changes for performance)
+    set((state) => {
+      const nextNodes = applyNodeChanges(changes, state.nodes) as Node<HydraNodeData>[];
+      return { nodes: deduplicate(nextNodes) };
+    });
+    
     const hasStructuralChange = changes.some(
       (c) => c.type === 'remove' || c.type === 'add'
     );
@@ -151,9 +160,10 @@ export const useGraphStore = create<GraphState>()(
       }
     });
 
-    set((state) => ({
-      edges: applyEdgeChanges(changes, state.edges),
-    }));
+    set((state) => {
+      const nextEdges = applyEdgeChanges(changes, state.edges);
+      return { edges: deduplicate(nextEdges) };
+    });
     
     get().regenerateCode();
   },
@@ -167,7 +177,6 @@ export const useGraphStore = create<GraphState>()(
 
     const isParamBinding = targetHandle.startsWith('param-in:');
     
-    // Remove existing edge to same target handle (replace connection)
     const newEdges = edges.filter(
       (e) =>
         !(e.target === connection.target && e.targetHandle === connection.targetHandle)
@@ -179,11 +188,10 @@ export const useGraphStore = create<GraphState>()(
 
     if (isParamBinding) {
       const paramName = targetHandle.split(':')[1];
-      edgeColor = '#eab308'; // Values/Math yellow
+      edgeColor = '#eab308';
       strokeWidth = 1.5;
       dashed = true;
 
-      // Update target node data with binding info
       set((state) => ({
         nodes: state.nodes.map(n => {
           if (n.id === target) {
@@ -201,11 +209,9 @@ export const useGraphStore = create<GraphState>()(
     } else {
       const sourceNode = get().nodes.find((n) => n.id === source);
       if (sourceNode) {
-        const category = sourceNode.data.functionDef.category;
-        const meta = categoryMeta[category];
-        if (meta) {
-          edgeColor = meta.color;
-        }
+        const cat = sourceNode.data.functionDef.category;
+        const meta = categoryMeta[cat];
+        if (meta) edgeColor = meta.color;
       }
     }
 
@@ -220,7 +226,7 @@ export const useGraphStore = create<GraphState>()(
       type: 'hydra'
     };
 
-    set({ edges: addEdge(newConnection, newEdges) });
+    set({ edges: deduplicate(addEdge(newConnection, newEdges)) });
     get().regenerateCode();
   },
 
@@ -228,17 +234,11 @@ export const useGraphStore = create<GraphState>()(
     const fnDef = getHydraFunction(hydraFunctionName);
     if (!fnDef) return;
 
-    // Build default parameter values
-    const params: Record<string, number> = {};
-    fnDef.params.forEach((p) => {
-      params[p.name] = p.default;
-    });
+    const params: Record<string, any> = {};
+    fnDef.params.forEach((p) => { params[p.name] = p.default; });
 
     const nodeType = determineNodeType(fnDef);
-    let reactFlowType = 'hydraTransform';
-    if (nodeType === 'source') reactFlowType = 'hydraSource';
-    else if (nodeType === 'output') reactFlowType = 'hydraOutput';
-    else if (nodeType === 'value') reactFlowType = 'hydraValue';
+    const reactFlowType = nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : (nodeType === 'value' ? 'hydraValue' : 'hydraTransform'));
 
     const newNode: Node<HydraNodeData> = {
       id: generateNodeId(),
@@ -259,40 +259,37 @@ export const useGraphStore = create<GraphState>()(
   },
 
   addAndConnectNode: (hydraFunctionName, position, connectFrom) => {
-    // Add the node
     const fnDef = getHydraFunction(hydraFunctionName);
     if (!fnDef) return;
 
-    const params: Record<string, number> = {};
+    const params: Record<string, any> = {};
     fnDef.params.forEach((p) => { params[p.name] = p.default; });
 
     const nodeType = determineNodeType(fnDef);
     const newNodeId = generateNodeId();
+    const reactFlowType = nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : (nodeType === 'value' ? 'hydraValue' : 'hydraTransform'));
 
     const newNode: Node<HydraNodeData> = {
       id: newNodeId,
-      type: nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : 'hydraTransform'),
+      type: reactFlowType,
       position,
       data: {
         hydraFunction: hydraFunctionName,
         functionDef: fnDef,
         params,
+        bindings: {},
         label: hydraFunctionName,
         nodeType,
       },
     };
 
-    // Build the connection edge
-    // Are we pulling from a source output or from a target input backwards?
     let newEdge: Edge | null = null;
     let edgeColor = '#6366f1';
     
     if (connectFrom.handleType === 'source') {
-      // Pulling from an output, connecting to the new node's input.
       const sourceNode = get().nodes.find(n => n.id === connectFrom.nodeId);
       if (sourceNode) {
-        const cat = sourceNode.data.functionDef.category;
-        const meta = categoryMeta[cat];
+        const meta = categoryMeta[sourceNode.data.functionDef.category];
         if (meta) edgeColor = meta.color;
       }
 
@@ -304,11 +301,10 @@ export const useGraphStore = create<GraphState>()(
         targetHandle: 'texture-in',
         animated: true,
         style: { stroke: edgeColor, strokeWidth: 2 },
+        type: 'hydra'
       };
     } else {
-      // Pulling backward from a target input, connecting the new node's output to it.
-      const cat = fnDef.category;
-      const meta = categoryMeta[cat];
+      const meta = categoryMeta[fnDef.category];
       if (meta) edgeColor = meta.color;
 
       newEdge = {
@@ -319,13 +315,10 @@ export const useGraphStore = create<GraphState>()(
         targetHandle: connectFrom.handleId,
         animated: true,
         style: { stroke: edgeColor, strokeWidth: 2 },
+        type: 'hydra'
       };
     }
 
-    // Now validate it semantically to make sure we don't insert absurd connections
-    // Actually validation is optional here since we already filter the menu choices,
-    // but React Flow edges just snap based on type.
-    
     set((state) => ({ 
       nodes: [...state.nodes, newNode],
       edges: newEdge ? [...state.edges, newEdge] : state.edges 
@@ -342,16 +335,13 @@ export const useGraphStore = create<GraphState>()(
     const targetNode = nodes.find((n) => n.id === edge.target);
     if (!sourceNode || !targetNode) return;
 
-    // Obtain function definition and build new node
-    const fnDef = require('@/hydra/registry').getHydraFunction(hydraFunctionName);
+    const fnDef = getHydraFunction(hydraFunctionName);
     if (!fnDef) return;
 
-    const params: Record<string, number> = {};
-    fnDef.params.forEach((p: any) => {
-      params[p.name] = p.default;
-    });
+    const params: Record<string, any> = {};
+    fnDef.params.forEach((p) => { params[p.name] = p.default; });
 
-    const nodeType = determineNodeType(fnDef.type);
+    const nodeType = determineNodeType(fnDef);
     const newNodeId = generateNodeId();
 
     const newNode: Node<HydraNodeData> = {
@@ -365,21 +355,20 @@ export const useGraphStore = create<GraphState>()(
         hydraFunction: hydraFunctionName,
         functionDef: fnDef,
         params,
+        bindings: {},
         label: hydraFunctionName,
         nodeType,
       },
     };
 
-    // Calculate edge colors
     let sourceColor = '#6366f1';
-    const sourceCatMeta = require('@/hydra/registry').categoryMeta[sourceNode.data.functionDef.category];
-    if (sourceCatMeta) sourceColor = sourceCatMeta.color;
+    const sourceMeta = categoryMeta[sourceNode.data.functionDef.category];
+    if (sourceMeta) sourceColor = sourceMeta.color;
 
     let newColor = '#6366f1';
-    const newCatMeta = require('@/hydra/registry').categoryMeta[fnDef.category];
-    if (newCatMeta) newColor = newCatMeta.color;
+    const newMeta = categoryMeta[fnDef.category];
+    if (newMeta) newColor = newMeta.color;
 
-    // Create intermediate edges
     const edge1: Edge = {
       id: `e-${edge.source}-${newNodeId}`,
       source: edge.source,
@@ -388,6 +377,7 @@ export const useGraphStore = create<GraphState>()(
       targetHandle: 'texture-in',
       animated: true,
       style: { stroke: sourceColor, strokeWidth: 2 },
+      type: 'hydra'
     };
 
     const edge2: Edge = {
@@ -398,6 +388,7 @@ export const useGraphStore = create<GraphState>()(
       targetHandle: edge.targetHandle,
       animated: true,
       style: { stroke: newColor, strokeWidth: 2 },
+      type: 'hydra'
     };
 
     const newEdges = edges.filter((e) => e.id !== edgeId).concat([edge1, edge2]);
@@ -433,12 +424,7 @@ export const useGraphStore = create<GraphState>()(
   setNodeAlias: (nodeId, alias) => {
     set((state) => ({
       nodes: state.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              data: { ...n.data, alias },
-            }
-          : n
+        n.id === nodeId ? { ...n, data: { ...n.data, alias, label: alias || n.data.hydraFunction } } : n
       ),
     }));
     get().regenerateCode();
@@ -454,6 +440,7 @@ export const useGraphStore = create<GraphState>()(
     }));
     get().regenerateCode();
   },
+
   removeNodeParam: (nodeId, paramName) => {
     set((state) => ({
       nodes: state.nodes.map((n) => {
@@ -485,7 +472,6 @@ export const useGraphStore = create<GraphState>()(
     get().regenerateCode();
   },
 
-
   updateNodeBinding: (nodeId, paramName, binding) => {
     set((state) => ({
       nodes: state.nodes.map((n) =>
@@ -513,15 +499,7 @@ export const useGraphStore = create<GraphState>()(
   updateOutputBuffer: (nodeId, buffer) => {
     set((state) => ({
       nodes: state.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                params: { ...n.data.params, buffer },
-              },
-            }
-          : n
+        n.id === nodeId ? { ...n, data: { ...n.data, params: { ...n.data.params, buffer } } } : n
       ),
     }));
     get().regenerateCode();
@@ -537,11 +515,10 @@ export const useGraphStore = create<GraphState>()(
     if (code === generatedCode) return;
     set({ generatedCode: code });
     
-    // External performance window sync
+    // Sync
     localStorage.setItem('hydra-live-code', code);
     window.dispatchEvent(new Event('storage'));
 
-    // Persistent Autosave
     if (get().autosaveEnabled) {
       localStorage.setItem('hydra-autosave', get().serializeGraph());
     }
@@ -559,10 +536,7 @@ export const useGraphStore = create<GraphState>()(
   loadAutosave: () => {
     try {
       const saved = localStorage.getItem('hydra-autosave');
-      if (saved) {
-        get().deserializeGraph(saved);
-        get().addHydraLog('info', 'Last session restored from autosave');
-      }
+      if (saved) get().deserializeGraph(saved);
     } catch (err) {
       console.error('Failed to load autosave:', err);
     }
@@ -573,14 +547,12 @@ export const useGraphStore = create<GraphState>()(
     try {
       const { nodes: newNodes, edges: newEdges } = buildGraphFromCode(newCode, get().nodes);
       
-      // Update state
       set({ 
-        nodes: newNodes, 
-        edges: newEdges.length > 0 ? newEdges : get().edges,
+        nodes: deduplicate(newNodes), 
+        edges: deduplicate(newEdges.length > 0 ? newEdges : get().edges),
         generatedCode: newCode 
       });
 
-      // Crucial: Update localStorage and trigger autosave for code changes too
       localStorage.setItem('hydra-live-code', newCode);
       window.dispatchEvent(new Event('storage'));
       
@@ -588,37 +560,23 @@ export const useGraphStore = create<GraphState>()(
         localStorage.setItem('hydra-autosave', get().serializeGraph());
       }
     } catch (err) {
-      // Keep code in sync even if parser fails mid-typing
       set({ generatedCode: newCode });
     }
   },
 
-  setEditorMode: (mode) => {
-    set({ editorMode: mode });
-  },
-
-  setShowPreview: (show) => {
-    set({ showPreview: show });
-  },
-
-  setShowMiniMap: (show) => {
-    set({ showMiniMap: show });
-  },
+  setEditorMode: (mode) => set({ editorMode: mode }),
+  setShowPreview: (show) => set({ showPreview: show }),
+  setShowMiniMap: (show) => set({ showMiniMap: show }),
+  
   addHydraLog: (type, message) => {
     set((s) => ({
-      hydraLogs: [
-        { type, message, timestamp: Date.now() },
-        ...s.hydraLogs.slice(0, 49) // Keep last 50
-      ],
+      hydraLogs: [{ type, message, timestamp: Date.now() }, ...s.hydraLogs.slice(0, 49)],
       hydraError: type === 'error' ? message : s.hydraError
     }));
   },
-  clearHydraLogs: () => {
-    set({ hydraLogs: [], hydraError: null });
-  },
-  setActiveDraftConnection: (conn) => {
-    set({ activeDraftConnection: conn });
-  },
+  
+  clearHydraLogs: () => set({ hydraLogs: [], hydraError: null }),
+  setActiveDraftConnection: (conn) => set({ activeDraftConnection: conn }),
 
   clearGraph: () => {
     set({
@@ -657,11 +615,10 @@ export const useGraphStore = create<GraphState>()(
   deserializeGraph: (json) => {
     try {
       const parsed = JSON.parse(json);
-      const restoredNodes: Node<HydraNodeData>[] = parsed.nodes
+      const restoredNodes = (parsed.nodes || [])
         .map((n: any) => {
           const fnDef = getHydraFunction(n.data.hydraFunction);
           if (!fnDef) return null;
-
           const nodeType = determineNodeType(fnDef);
           return {
             id: n.id,
@@ -678,11 +635,11 @@ export const useGraphStore = create<GraphState>()(
             },
           };
         })
-        .filter(Boolean) as Node<HydraNodeData>[];
+        .filter(Boolean);
 
       set({
-        nodes: restoredNodes,
-        edges: parsed.edges,
+        nodes: deduplicate(restoredNodes),
+        edges: deduplicate(parsed.edges || []),
         selectedNodeId: null,
       });
       get().regenerateCode();
@@ -695,14 +652,9 @@ export const useGraphStore = create<GraphState>()(
     const json = get().serializeGraph();
     try {
       const saved = JSON.parse(localStorage.getItem('hydra-patches') || '{}');
-      saved[name] = {
-        data: json,
-        savedAt: new Date().toISOString(),
-      };
+      saved[name] = { data: json, savedAt: new Date().toISOString() };
       localStorage.setItem('hydra-patches', JSON.stringify(saved));
-    } catch (err) {
-      console.error('Failed to save patch:', err);
-    }
+    } catch { /* ignore */ }
   },
 
   loadPatch: (name) => {
@@ -712,19 +664,15 @@ export const useGraphStore = create<GraphState>()(
         get().deserializeGraph(saved[name].data);
         return true;
       }
-    } catch (err) {
-      console.error('Failed to load patch:', err);
-    }
+    } catch { /* ignore */ }
     return false;
   },
 
   getSavedPatches: () => {
     try {
-      const saved = JSON.parse(localStorage.getItem('hydra-patches') || '{}');
-      return Object.keys(saved);
-    } catch {
-      return [];
-    }
+      const patches = JSON.parse(localStorage.getItem('hydra-patches') || '{}');
+      return Object.keys(patches);
+    } catch { return []; }
   },
 
   addOutputNode: (buffer, position) => {
@@ -742,7 +690,6 @@ export const useGraphStore = create<GraphState>()(
         nodeType: 'output',
       },
     };
-
     set((state) => ({ nodes: [...state.nodes, newNode] }));
     get().regenerateCode();
   },
@@ -774,12 +721,13 @@ export const useGraphStore = create<GraphState>()(
         targetHandle: 'output-in',
         animated: true,
         style: { stroke: '#ef4444', strokeWidth: 2 },
+        type: 'hydra'
       };
     }
 
     set((state) => ({ 
-      nodes: [...state.nodes, newNode],
-      edges: newEdge ? [...state.edges, newEdge] : state.edges 
+      nodes: deduplicate([...state.nodes, newNode]),
+      edges: deduplicate(newEdge ? [...state.edges, newEdge] : state.edges) 
     }));
     get().regenerateCode();
   },
@@ -789,9 +737,9 @@ export const useGraphStore = create<GraphState>()(
       nodes: state.nodes,
       edges: state.edges,
       generatedCode: state.generatedCode,
-      selectedNodeId: state.selectedNodeId
+      editorMode: state.editorMode,
+      showPreview: state.showPreview,
+      autosaveEnabled: state.autosaveEnabled
     }),
   }
 ));
-
-// End of Graph Store

@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Monitor, MonitorOff } from 'lucide-react';
 import { useGraphStore } from '@/store/graphStore';
 import { getHydraRuntime } from '@/hydra/runtime';
@@ -13,7 +13,7 @@ import { getHydraRuntime } from '@/hydra/runtime';
 export default function HydraPreview() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const generatedCode = useGraphStore((s) => s.generatedCode);
   const showPreview = useGraphStore((s) => s.showPreview);
   const setShowPreview = useGraphStore((s) => s.setShowPreview);
@@ -23,37 +23,41 @@ export default function HydraPreview() {
   // Initialize Hydra on mount
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || initializedRef.current || !showPreview) return;
+    if (!canvas || isInitialized || !showPreview) return;
 
-    initializedRef.current = true;
     const runtime = getHydraRuntime();
 
     runtime.initialize(canvas, (error) => {
       if (error) {
         addHydraLog('error', error);
+      } else {
+        setIsInitialized(true);
       }
+    }).then(() => {
+        // Double check if it initialized correctly
+        setIsInitialized(true);
     });
 
     return () => {
       runtime.destroy();
-      initializedRef.current = false;
+      setIsInitialized(false);
     };
   }, [addHydraLog, showPreview]);
 
   // Evaluate code changes
   useEffect(() => {
-    if (!initializedRef.current) return;
+    if (!isInitialized) return;
     const runtime = getHydraRuntime();
 
     // Debounce evaluation slightly
     const timer = setTimeout(() => {
-      if (showPreview) {
+      if (showPreview && generatedCode) {
         runtime.evaluate(generatedCode);
       }
-    }, 150);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [generatedCode]);
+  }, [generatedCode, isInitialized, showPreview]);
 
   // Handle resize
   const handleResize = useCallback(() => {
