@@ -45,7 +45,7 @@ export default function HydraEditor() {
         }
 
         e.preventDefault();
-        setTabMenuConfig({ open: true });
+        window.dispatchEvent(new CustomEvent('request-tab-menu'));
       }
     };
 

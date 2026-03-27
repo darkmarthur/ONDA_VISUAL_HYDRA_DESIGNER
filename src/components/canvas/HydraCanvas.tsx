@@ -156,6 +156,33 @@ function HydraCanvasInner() {
     }
   }, [edgeMenu, removeEdge]);
 
+  const lastMousePos = useRef({ 
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0, 
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0 
+  });
+
+  useEffect(() => {
+    const trackMouse = (e: MouseEvent) => {
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('mousemove', trackMouse);
+    return () => window.removeEventListener('mousemove', trackMouse);
+  }, []);
+
+  useEffect(() => {
+    const handleRequest = () => {
+      const position = screenToFlowPosition(lastMousePos.current);
+      window.dispatchEvent(
+        new CustomEvent('open-tab-menu', {
+          detail: { position },
+        })
+      );
+    };
+
+    window.addEventListener('request-tab-menu', handleRequest);
+    return () => window.removeEventListener('request-tab-menu', handleRequest);
+  }, [screenToFlowPosition]);
+
   const defaultEdgeOptions = useMemo(
     () => ({
       type: 'smoothstep',

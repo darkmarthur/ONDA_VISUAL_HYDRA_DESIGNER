@@ -87,7 +87,7 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
     if (activeDraftConnection) {
       if (activeDraftConnection.handleType === 'source') {
         // We are pulling from an output, need a node that can receive an input
-        list = list.filter((fn) => fn.type !== 'src' && !fn.isOutput);
+        list = list.filter((fn) => fn.type !== 'src');
       } else if (activeDraftConnection.handleType === 'target') {
         // We are pulling from an input (backwards), need a node that can produce an output
         list = list.filter((fn) => !fn.isOutput);

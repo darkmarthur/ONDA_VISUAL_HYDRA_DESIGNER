@@ -16,9 +16,13 @@ export default function FloatingCable() {
     if (!activeDraft) return;
 
     const handleMouseMove = (event: MouseEvent) => {
+      // Capture mouse position immediately
       const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       setMousePos(pos);
     };
+
+    // Initial capture
+    // setMousePos(screenToFlowPosition({ x: lastKnownX, y: lastKnownY })); // We don't have easy access here
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -51,7 +55,9 @@ export default function FloatingCable() {
     handleY = nodeY + nodeH * 0.45;
   }
 
-  // Points in graph space
+  // Source is ALWAYS the one on the LEFT visually for the Bezier path to work best
+  // If we drag from a source node, the 'source' of the path is the node.
+  // If we drag from a target node (backward), the 'source' of the path is the MOUSE.
   const sourceX = isSource ? handleX : mousePos.x;
   const sourceY = isSource ? handleY : mousePos.y;
   const targetX = isSource ? mousePos.x : handleX;
@@ -60,10 +66,10 @@ export default function FloatingCable() {
   const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
-    sourcePosition: isSource ? Position.Right : Position.Left,
+    sourcePosition: Position.Right,
     targetX,
     targetY,
-    targetPosition: isSource ? Position.Left : Position.Right,
+    targetPosition: Position.Left,
   });
 
   // We wrap the SVG in a div that follows the pane's transform
