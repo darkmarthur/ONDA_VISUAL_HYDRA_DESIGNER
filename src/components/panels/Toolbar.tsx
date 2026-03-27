@@ -2,14 +2,14 @@
 
 import React, { useState, useRef } from 'react';
 import { useGraphStore } from '@/store/graphStore';
-import { 
-  Monitor, 
-  MonitorOff, 
-  Code, 
-  LayoutTemplate, 
-  Save, 
-  FolderOpen, 
-  RotateCcw, 
+import {
+  Monitor,
+  MonitorOff,
+  Code,
+  LayoutTemplate,
+  Save,
+  FolderOpen,
+  RotateCcw,
   Trash2,
   ChevronDown,
   Download,
@@ -19,25 +19,25 @@ import {
 } from 'lucide-react';
 
 export default function Toolbar() {
-  const clearGraph = useGraphStore((s) => s.clearGraph);
-  const savePatch = useGraphStore((s) => s.savePatch);
-  const loadPatch = useGraphStore((s) => s.loadPatch);
-  const getSavedPatches = useGraphStore((s) => s.getSavedPatches);
-  const serializeGraph = useGraphStore((s) => s.serializeGraph);
-  const deserializeGraph = useGraphStore((s) => s.deserializeGraph);
-  const updateGraphFromCode = useGraphStore((s) => s.updateGraphFromCode);
-  const editorMode = useGraphStore((s) => s.editorMode);
-  const setEditorMode = useGraphStore((s) => s.setEditorMode);
+  const clearGraph=useGraphStore((s) => s.clearGraph);
+  const savePatch=useGraphStore((s) => s.savePatch);
+  const loadPatch=useGraphStore((s) => s.loadPatch);
+  const getSavedPatches=useGraphStore((s) => s.getSavedPatches);
+  const serializeGraph=useGraphStore((s) => s.serializeGraph);
+  const deserializeGraph=useGraphStore((s) => s.deserializeGraph);
+  const updateGraphFromCode=useGraphStore((s) => s.updateGraphFromCode);
+  const editorMode=useGraphStore((s) => s.editorMode);
+  const setEditorMode=useGraphStore((s) => s.setEditorMode);
 
-  const [showSave, setShowSave] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [patchName, setPatchName] = useState('');
+  const [showSave, setShowSave]=useState(false);
+  const [showMenu, setShowMenu]=useState(false);
+  const [patchName, setPatchName]=useState('');
 
-  const savedPatches = getSavedPatches();
-  const lastPatch = savedPatches.length > 0 ? savedPatches[savedPatches.length - 1] : null;
-  const liveWindowRef = useRef<Window | null>(null);
+  const savedPatches=getSavedPatches();
+  const lastPatch=savedPatches.length>0? savedPatches[savedPatches.length-1]:null;
+  const liveWindowRef=useRef<Window|null>(null);
 
-  const handleSave = () => {
+  const handleSave=() => {
     if (patchName.trim()) {
       savePatch(patchName.trim());
       setPatchName('');
@@ -45,33 +45,33 @@ export default function Toolbar() {
     }
   };
 
-  const handleExportJS = () => {
-    const json = serializeGraph();
-    const code = useGraphStore.getState().generatedCode;
-    const fileContent = `// ONDA VISUAL HYDRA DESIGNER PATCH\n// ==BEGIN_GRAPH==\n// ${json}\n// ==END_GRAPH==\n\n${code}`;
-    
-    const blob = new Blob([fileContent], { type: 'application/javascript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `hydra-patch-${Date.now()}.js`;
+  const handleExportJS=() => {
+    const json=serializeGraph();
+    const code=useGraphStore.getState().generatedCode;
+    const fileContent=`// ONDA VISUAL HYDRA DESIGNER PATCH\n// ==BEGIN_GRAPH==\n// ${json}\n// ==END_GRAPH==\n\n${code}`;
+
+    const blob=new Blob([fileContent], { type: 'application/javascript' });
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`hydra-patch-${Date.now()}.js`;
     a.click();
     URL.revokeObjectURL(url);
     setShowMenu(false);
   };
 
-  const handleImportJS = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.js';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+  const handleImportJS=() => {
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='.js';
+    input.onchange=(e) => {
+      const file=(e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target?.result as string;
-        const graphMatch = text.match(/\/\/ ==BEGIN_GRAPH==\s*\/\/\s*([\s\S]*?)\s*\/\/ ==END_GRAPH==/);
-        if (graphMatch && graphMatch[1]) {
+      const reader=new FileReader();
+      reader.onload=(event) => {
+        const text=event.target?.result as string;
+        const graphMatch=text.match(/\/\/ ==BEGIN_GRAPH==\s*\/\/\s*([\s\S]*?)\s*\/\/ ==END_GRAPH==/);
+        if (graphMatch&&graphMatch[1]) {
           deserializeGraph(graphMatch[1]);
         } else {
           // If no JSON block, try code sync
@@ -84,27 +84,24 @@ export default function Toolbar() {
     setShowMenu(false);
   };
 
-  const launchLiveWindow = () => {
-    if (liveWindowRef.current && !liveWindowRef.current.closed) {
+  const launchLiveWindow=() => {
+    if (liveWindowRef.current&&!liveWindowRef.current.closed) {
       liveWindowRef.current.focus();
     } else {
-      liveWindowRef.current = window.open('/live', 'HydraLive', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+      liveWindowRef.current=window.open('/live', 'HydraLive', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
     }
   };
 
-  const closeLiveWindow = () => {
-    if (liveWindowRef.current && !liveWindowRef.current.closed) {
+  const closeLiveWindow=() => {
+    if (liveWindowRef.current&&!liveWindowRef.current.closed) {
       liveWindowRef.current.close();
-      liveWindowRef.current = null;
+      liveWindowRef.current=null;
     }
   };
 
   return (
     <header className="toolbar">
       <div className="toolbar__brand">
-        <span className="toolbar__logo">
-          <Hexagon size={20} fill="currentColor" fillOpacity={0.2} />
-        </span>
         <h1 className="toolbar__title">HYDRA DESIGNER</h1>
       </div>
 
@@ -112,14 +109,14 @@ export default function Toolbar() {
         {/* Group 1: Workspace Modes */}
         <div className="toolbar__group">
           <button
-            className={`toolbar__btn toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
+            className={`toolbar__btn toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('visual')}
           >
             <LayoutTemplate size={14} className="toolbar__icon" />
             Visual Editor
           </button>
           <button
-            className={`toolbar__btn toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
+            className={`toolbar__btn toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('code')}
           >
             <Code size={14} className="toolbar__icon" />
@@ -132,15 +129,15 @@ export default function Toolbar() {
         {/* Group 2: Display / Output */}
         <div className="toolbar__group">
           <div className="toolbar__action-group toolbar__live-controls">
-            <button 
-              className="toolbar__btn toolbar__btn--live-show" 
+            <button
+              className="toolbar__btn toolbar__btn--live-show"
               onClick={launchLiveWindow}
               title="Open External Preview Window"
             >
               <Monitor size={14} className="toolbar__icon" />
               Show Live
             </button>
-            <button 
+            <button
               className="toolbar__btn toolbar__btn--live-hide"
               onClick={closeLiveWindow}
               title="Close External Window"
@@ -154,9 +151,9 @@ export default function Toolbar() {
 
         {/* Group 3: Project / State */}
         <div className="toolbar__group">
-          <button 
-            className="toolbar__btn" 
-            onClick={() => lastPatch && loadPatch(lastPatch)}
+          <button
+            className="toolbar__btn"
+            onClick={() => lastPatch&&loadPatch(lastPatch)}
             disabled={!lastPatch}
             title="Reload Last Saved State"
           >
@@ -172,14 +169,14 @@ export default function Toolbar() {
               <Save size={14} className="toolbar__icon" />
               Save
             </button>
-            {showSave && (
+            {showSave&&(
               <div className="toolbar__dropdown">
                 <input
                   type="text"
                   placeholder="Patch name..."
                   value={patchName}
                   onChange={(e) => setPatchName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  onKeyDown={(e) => e.key==='Enter'&&handleSave()}
                   className="toolbar__input"
                   autoFocus
                 />
@@ -199,7 +196,7 @@ export default function Toolbar() {
               Projects
               <ChevronDown size={12} style={{ marginLeft: '4px', opacity: 0.5 }} />
             </button>
-            {showMenu && (
+            {showMenu&&(
               <div className="toolbar__dropdown" style={{ width: '240px' }}>
                 <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Actions
@@ -212,16 +209,16 @@ export default function Toolbar() {
                   <Upload size={12} style={{ marginRight: '8px' }} />
                   Import Patch (.js)
                 </button>
-                
+
                 <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-subtle)' }}></div>
-                
+
                 <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Project List
                 </div>
                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {savedPatches.length === 0 ? (
+                  {savedPatches.length===0? (
                     <p className="toolbar__dropdown-empty">No saved projects</p>
-                  ) : (
+                  ):(
                     savedPatches.map((name) => (
                       <button
                         key={name}

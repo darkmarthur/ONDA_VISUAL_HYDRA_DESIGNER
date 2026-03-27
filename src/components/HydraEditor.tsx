@@ -14,6 +14,7 @@ import CodePanel from './panels/CodePanel';
 import HydraPreview from './preview/HydraPreview';
 import Toolbar from './panels/Toolbar';
 import TabMenu from './panels/TabMenu';
+import Footer from './panels/Footer';
 
 export default function HydraEditor() {
   const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string; position?: { x: number; y: number } }>({ open: false });
@@ -91,6 +92,8 @@ export default function HydraEditor() {
           {editorMode === 'visual' && <Inspector />}
         </div>
       </div>
+
+      <Footer />
 
       {tabMenuConfig.open && (
         <TabMenu 
