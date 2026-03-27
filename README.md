@@ -66,7 +66,7 @@ Official links:
 
 You can try the online version here:
 
-**https://hydra-editor.ondavisual.mx**
+**https://hydra-designer.ondavisual.mx**
 
 ---
 
