@@ -54,6 +54,22 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
         id="texture-in"
         className="hydra-handle hydra-handle--texture-in"
         style={{ top: isCombine ? '45%' : '50%' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          if (active && active.handleType === 'source') {
+            state.onConnect({
+              source: active.nodeId,
+              sourceHandle: active.handleId,
+              target: id,
+              targetHandle: 'texture-in'
+            });
+            state.setActiveDraftConnection(null);
+          } else {
+            state.setActiveDraftConnection({ nodeId: id, handleId: 'texture-in', handleType: 'target' });
+          }
+        }}
       />
 
       {/* Secondary texture input (only for combine/combineCoord) */}
@@ -64,6 +80,22 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
           id="texture-secondary"
           className="hydra-handle hydra-handle--texture-secondary"
           style={{ top: '75%' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const state = useGraphStore.getState();
+            const active = state.activeDraftConnection;
+            if (active && active.handleType === 'source') {
+              state.onConnect({
+                source: active.nodeId,
+                sourceHandle: active.handleId,
+                target: id,
+                targetHandle: 'texture-secondary'
+              });
+              state.setActiveDraftConnection(null);
+            } else {
+              state.setActiveDraftConnection({ nodeId: id, handleId: 'texture-secondary', handleType: 'target' });
+            }
+          }}
         />
       )}
 
@@ -139,6 +171,22 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
         position={Position.Right}
         id="texture-out"
         className="hydra-handle hydra-handle--texture-out"
+        onClick={(e) => {
+          e.stopPropagation();
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          if (active && active.handleType === 'target') {
+            state.onConnect({
+              source: id,
+              sourceHandle: 'texture-out',
+              target: active.nodeId,
+              targetHandle: active.handleId
+            });
+            state.setActiveDraftConnection(null);
+          } else {
+            state.setActiveDraftConnection({ nodeId: id, handleId: 'texture-out', handleType: 'source' });
+          }
+        }}
       />
     </div>
   );

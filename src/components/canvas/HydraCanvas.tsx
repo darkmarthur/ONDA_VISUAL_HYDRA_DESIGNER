@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useCallback, useMemo, useRef, DragEvent } from 'react';
+import React, { useCallback, useMemo, useRef, DragEvent, useEffect, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -23,6 +23,7 @@ import '@xyflow/react/dist/style.css';
 import SourceNode from './nodes/SourceNode';
 import TransformNode from './nodes/TransformNode';
 import OutputNode from './nodes/OutputNode';
+import FloatingCable from './FloatingCable';
 import { useGraphStore, addOutputNode } from '@/store/graphStore';
 import { HydraNodeData, HydraOutput } from '@/hydra/types';
 
@@ -124,6 +125,17 @@ function HydraCanvasInner() {
     setActiveDraftConnection(null);
   }, [setSelectedNode, setActiveDraftConnection]);
 
+  // Handle Esc to cancel drafting
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activeDraftConnection) {
+        setActiveDraftConnection(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activeDraftConnection, setActiveDraftConnection]);
+
   const onEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
       event.preventDefault();
@@ -198,6 +210,9 @@ function HydraCanvasInner() {
           maskColor="rgba(0,0,0,0.7)"
           className="hydra-minimap"
         />
+        
+        <FloatingCable />
+
         {edgeMenu && (
           <div
             style={{

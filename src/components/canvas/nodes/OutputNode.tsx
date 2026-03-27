@@ -47,6 +47,22 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         position={Position.Left}
         id="output-in"
         className="hydra-handle hydra-handle--output-in"
+        onClick={(e) => {
+          e.stopPropagation();
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          if (active && active.handleType === 'source') {
+            state.onConnect({
+              source: active.nodeId,
+              sourceHandle: active.handleId,
+              target: id,
+              targetHandle: 'output-in'
+            });
+            state.setActiveDraftConnection(null);
+          } else {
+            state.setActiveDraftConnection({ nodeId: id, handleId: 'output-in', handleType: 'target' });
+          }
+        }}
       />
 
       <div 

@@ -92,6 +92,23 @@ function SourceNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         position={Position.Right}
         id="texture-out"
         className="hydra-handle hydra-handle--texture-out"
+        onClick={(e) => {
+          e.stopPropagation();
+          const state = useGraphStore.getState();
+          const active = state.activeDraftConnection;
+          
+          if (active && active.handleType === 'target') {
+            state.onConnect({
+              source: id,
+              sourceHandle: 'texture-out',
+              target: active.nodeId,
+              targetHandle: active.handleId
+            });
+            state.setActiveDraftConnection(null);
+          } else {
+            state.setActiveDraftConnection({ nodeId: id, handleId: 'texture-out', handleType: 'source' });
+          }
+        }}
       />
     </div>
   );
