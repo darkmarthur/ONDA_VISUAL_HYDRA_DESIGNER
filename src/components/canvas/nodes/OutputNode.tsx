@@ -7,7 +7,7 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
-import { Play, Monitor } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { useGraphStore } from '@/store/graphStore';
 
@@ -48,6 +48,7 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         position={Position.Left}
         id="output-in"
         className="hydra-handle"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();

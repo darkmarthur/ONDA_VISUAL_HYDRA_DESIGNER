@@ -7,54 +7,53 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Activity, Box, Sun, Type } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
 
-function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
-  const setSelectedNode=useGraphStore((s) => s.setSelectedNode);
-  const setNodeAlias=useGraphStore((s) => s.setNodeAlias);
-  const updateNodeParam=useGraphStore((s) => s.updateNodeParam);
-  const updateNodeBinding=useGraphStore((s) => s.updateNodeBinding);
-  const meta=categoryMeta[data.functionDef.category];
+function SourceNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) {
+  const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
+  const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
+  const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
+  const meta = categoryMeta[data.functionDef.category];
 
-  const [isEditingAlias, setIsEditingAlias]=useState(false);
-  const [editAlias, setEditAlias]=useState(data.alias||'');
-  const inputRef=useRef<HTMLInputElement>(null);
+  const [isEditingAlias, setIsEditingAlias] = useState(false);
+  const [editAlias, setEditAlias] = useState(data.alias || '');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditingAlias&&inputRef.current) {
+    if (isEditingAlias && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditingAlias]);
 
-  const handleAliasSubmit=() => {
+  const handleAliasSubmit = () => {
     setIsEditingAlias(false);
-    if (editAlias!==data.alias) {
+    if (editAlias !== data.alias) {
       setNodeAlias(id, editAlias);
     }
   };
 
   return (
     <div
-      className={`hydra-node hydra-node--source ${selected? 'hydra-node--selected':''}`}
+      className={`hydra-node hydra-node--source ${selected ? 'hydra-node--selected' : ''}`}
       onClick={() => setSelectedNode(id)}
-      style={{ '--node-accent': meta?.color||'#f472b6' } as React.CSSProperties}
+      style={{ '--node-accent': meta?.color || '#f472b6' } as React.CSSProperties}
     >
       <div
         className="hydra-node__header"
         onDoubleClick={(e) => {
           e.stopPropagation();
           setIsEditingAlias(true);
-          setEditAlias(data.alias||'');
+          setEditAlias(data.alias || '');
         }}
         title="Double-click to set alias"
       >
         <span className="hydra-node__icon">
           <Activity size={14} strokeWidth={2.5} />
         </span>
-        {isEditingAlias? (
+        {isEditingAlias ? (
           <input
             ref={inputRef}
             className="hydra-node__alias-input"
@@ -62,36 +61,37 @@ function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
             onChange={(e) => setEditAlias(e.target.value)}
             onBlur={handleAliasSubmit}
             onKeyDown={(e) => {
-              if (e.key==='Enter') handleAliasSubmit();
-              if (e.key==='Escape') {
+              if (e.key === 'Enter') handleAliasSubmit();
+              if (e.key === 'Escape') {
                 setIsEditingAlias(false);
-                setEditAlias(data.alias||'');
+                setEditAlias(data.alias || '');
               }
             }}
           />
-        ):(
+        ) : (
           <div className="hydra-node__title-group">
-            <span className="hydra-node__label">{data.alias||data.label}</span>
-            {data.alias&&<span className="hydra-node__badge">{data.hydraFunction}</span>}
+            <span className="hydra-node__label">{data.alias || data.label}</span>
+            {data.alias && <span className="hydra-node__badge">{data.hydraFunction}</span>}
           </div>
         )}
-        {!data.alias&&!isEditingAlias&&<span className="hydra-node__category">{meta?.label||'Source'}</span>}
+        {!data.alias && !isEditingAlias && <span className="hydra-node__category">{meta?.label || 'Source'}</span>}
       </div>
+
       <div className="hydra-node__params">
         {data.functionDef.params.map((p) => {
-          const binding=data.bindings?.[p.name];
-          const isBound=binding&&binding.mode!=='literal';
+          const binding = data.bindings?.[p.name];
+          const isBound = binding && binding.mode !== 'literal';
 
           return (
-            <div key={p.name} className={`hydra-node__param-preview ${isBound? 'hydra-node__param-preview--bound':''}`}>
-              {p.canBind&&(
+            <div key={p.name} className={`hydra-node__param-preview ${isBound ? 'hydra-node__param-preview--bound' : ''}`}>
+              {p.canBind && (
                 <Handle
                   type="target"
                   position={Position.Left}
                   id={`param-in:${p.name}`}
                   className="hydra-handle"
                   title={`Bind ${p.name}`}
-                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     const state = useGraphStore.getState();
@@ -129,35 +129,13 @@ function SourceNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
           );
         })}
       </div>
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="output-in"
-        className="hydra-handle"
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          const state = useGraphStore.getState();
-          const active = state.activeDraftConnection;
-          if (active && active.handleType === 'source') {
-            state.onConnect({
-              source: active.nodeId,
-              sourceHandle: active.handleId,
-              target: id,
-              targetHandle: 'output-in'
-            });
-            state.setActiveDraftConnection(null);
-          } else {
-            state.setActiveDraftConnection({ nodeId: id, handleId: 'output-in', handleType: 'target' });
-          }
-        }}
-      />
+
       <Handle
         type="source"
         position={Position.Right}
         id="texture-out"
         className="hydra-handle"
-        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();

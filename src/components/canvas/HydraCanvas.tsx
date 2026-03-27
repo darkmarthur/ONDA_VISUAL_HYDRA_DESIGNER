@@ -189,8 +189,6 @@ function HydraCanvasInner() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onConnectStart={onConnectStart}
-        onConnectEnd={onConnectEnd}
         onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeClick={onNodeClick}
@@ -201,6 +199,7 @@ function HydraCanvasInner() {
         connectionLineType={ConnectionLineType.Bezier}
         connectionLineStyle={{ stroke: '#6366f1', strokeWidth: 3 }}
         connectOnClick={false}
+        nodesConnectable={false}
         fitView
         snapToGrid
         snapGrid={[16, 16]}

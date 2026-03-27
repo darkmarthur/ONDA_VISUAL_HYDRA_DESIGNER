@@ -862,6 +862,8 @@ html, body {
   border: 3px solid var(--bg-primary) !important;
   transition: all var(--transition-fast) !important;
   z-index: 10 !important;
+  pointer-events: auto !important; /* Force clickability even if nodesConnectable is false */
+  cursor: pointer !important;
 }
 
 /* Larger hit area for handles */

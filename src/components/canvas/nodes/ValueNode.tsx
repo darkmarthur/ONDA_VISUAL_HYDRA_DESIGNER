@@ -8,7 +8,7 @@
 
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { Activity, MousePointer2, Clock, Hash, Percent, Divide, Plus, X } from 'lucide-react';
+import { Activity, MousePointer2, Clock, Hash, Divide, Plus, X } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
@@ -69,7 +69,7 @@ function ConstantRow({ nodeId, name, value }: { nodeId: string; name: string; va
         id={`value-out:${name}`}
         className="hydra-handle"
         style={{ top: '50%', right: -4, transform: 'translateY(-50%)' }}
-        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();
@@ -94,7 +94,6 @@ function ConstantRow({ nodeId, name, value }: { nodeId: string; name: string; va
 function ValueNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) {
   const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
   const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
-  const updateNodeBinding = useGraphStore((s) => s.updateNodeBinding);
   const meta = categoryMeta[data.functionDef.category];
 
   const isConstant = data.hydraFunction === 'constant';
@@ -164,9 +163,9 @@ function ValueNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) 
                         type="target"
                         position={Position.Left}
                         id={`param-in:${p.name}`}
-                        className="hydra-handle hydra-handle--param-in"
+                        className="hydra-handle"
                         title={`Bind ${p.name}`}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
                           const state = useGraphStore.getState();
@@ -214,7 +213,7 @@ function ValueNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) 
           position={Position.Right}
           id="value-out"
           className="hydra-handle"
-          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             const state = useGraphStore.getState();

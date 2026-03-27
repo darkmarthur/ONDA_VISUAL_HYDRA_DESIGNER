@@ -1,63 +1,61 @@
 /**
  * Transform Node Component
- * Represents Hydra transform functions (coord, color, combine, combineCoord)
+ * Represents Hydra transform/color functions (.color, .scale, .rotate, etc.)
  */
 
 'use client';
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
-import { Filter, Layers, Box } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
 
-function TransformNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }) {
-  const setSelectedNode=useGraphStore((s) => s.setSelectedNode);
-  const setNodeAlias=useGraphStore((s) => s.setNodeAlias);
-  const updateNodeParam=useGraphStore((s) => s.updateNodeParam);
-  const updateNodeBinding=useGraphStore((s) => s.updateNodeBinding);
-  const meta=categoryMeta[data.functionDef.category];
-  const isCombine=data.functionDef.type==='combine'||data.functionDef.type==='combineCoord';
+function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData }) {
+  const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
+  const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
+  const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
+  const meta = categoryMeta[data.functionDef.category];
 
-  const mainConnections=useHandleConnections({ type: 'target', id: 'texture-in' });
-  const secConnections=useHandleConnections({ type: 'target', id: 'texture-secondary' });
+  // Logic to show/hide secondary handle if the function has 'combine' category
+  const isCombine = data.functionDef.type === 'combine' || data.functionDef.type === 'combineCoord';
+  const showSecondary = isCombine;
 
-  const hasMain=mainConnections.length>0;
-  const hasSec=isCombine? secConnections.length>0:true;
-  const hasError=!hasMain||!hasSec;
-
-  const [isEditingAlias, setIsEditingAlias]=useState(false);
-  const [editAlias, setEditAlias]=useState(data.alias||'');
-  const inputRef=useRef<HTMLInputElement>(null);
+  const [isEditingAlias, setIsEditingAlias] = useState(false);
+  const [editAlias, setEditAlias] = useState(data.alias || '');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditingAlias&&inputRef.current) {
+    if (isEditingAlias && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditingAlias]);
 
-  const handleAliasSubmit=() => {
+  const handleAliasSubmit = () => {
     setIsEditingAlias(false);
-    if (editAlias!==data.alias) {
+    if (editAlias !== data.alias) {
       setNodeAlias(id, editAlias);
     }
   };
 
+  const inConnections = useHandleConnections({ type: 'target', id: 'texture-in' });
+  const hasError = inConnections.length === 0;
+
   return (
     <div
-      className={`hydra-node hydra-node--transform ${selected? 'hydra-node--selected':''} ${hasError? 'hydra-node--error':''}`}
+      className={`hydra-node hydra-node--transform ${selected ? 'hydra-node--selected' : ''} ${hasError ? 'hydra-node--error' : ''}`}
       onClick={() => setSelectedNode(id)}
-      style={{ '--node-accent': meta?.color||'#60a5fa' } as React.CSSProperties}
+      style={{ '--node-accent': meta?.color || '#60a5fa' } as React.CSSProperties}
     >
       {/* Main texture input on the left */}
       <Handle
         type="target"
         position={Position.Left}
         id="texture-in"
-        className="hydra-handle hydra-handle--texture-in"
+        className="hydra-handle"
         style={{ top: isCombine ? '45%' : '50%' }}
-        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();
@@ -77,14 +75,14 @@ function TransformNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }
       />
 
       {/* Secondary texture input (only for combine/combineCoord) */}
-      {isCombine && (
+      {showSecondary && (
         <Handle
           type="target"
           position={Position.Left}
           id="texture-secondary"
-          className="hydra-handle hydra-handle--texture-secondary"
+          className="hydra-handle"
           style={{ top: '75%' }}
-          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             const state = useGraphStore.getState();
@@ -109,14 +107,14 @@ function TransformNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }
         onDoubleClick={(e) => {
           e.stopPropagation();
           setIsEditingAlias(true);
-          setEditAlias(data.alias||'');
+          setEditAlias(data.alias || '');
         }}
         title="Double-click to set alias"
       >
         <span className="hydra-node__icon">
           <Filter size={14} strokeWidth={2.5} />
         </span>
-        {isEditingAlias? (
+        {isEditingAlias ? (
           <input
             ref={inputRef}
             className="hydra-node__alias-input"
@@ -124,54 +122,52 @@ function TransformNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }
             onChange={(e) => setEditAlias(e.target.value)}
             onBlur={handleAliasSubmit}
             onKeyDown={(e) => {
-              if (e.key==='Enter') handleAliasSubmit();
-              if (e.key==='Escape') {
+              if (e.key === 'Enter') handleAliasSubmit();
+              if (e.key === 'Escape') {
                 setIsEditingAlias(false);
-                setEditAlias(data.alias||'');
+                setEditAlias(data.alias || '');
               }
             }}
           />
-        ):(
+        ) : (
           <div className="hydra-node__title-group">
-            <span className="hydra-node__label">{data.alias||data.label}</span>
-            {data.alias&&<span className="hydra-node__badge">{data.hydraFunction}</span>}
+            <span className="hydra-node__label">{data.alias || data.label}</span>
+            {data.alias && <span className="hydra-node__badge">{data.hydraFunction}</span>}
           </div>
         )}
-        {hasError&&(
+        {hasError && (
           <span className="hydra-node__error-icon" title="Missing required connection">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent-red)" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+              <path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
             </svg>
           </span>
         )}
-        <span className="hydra-node__category">{meta?.label}</span>
       </div>
 
-      {/* Visual indicator for combine nodes */}
-      {isCombine&&(
+      {isCombine && (
         <div className="hydra-node__combine-indicator">
           <div className="hydra-node__input-label" style={{ top: '45%' }}>main</div>
           <div className="hydra-node__input-label hydra-node__input-label--secondary" style={{ top: '75%' }}>
-            text
+            {data.functionDef.params[0]?.name || 'text'}
           </div>
         </div>
       )}
 
-      <div className={`hydra-node__params ${isCombine? 'hydra-node__params--combine':''}`}>
+      <div className={`hydra-node__params ${isCombine ? 'hydra-node__params--combine' : ''}`}>
         {data.functionDef.params.map((p) => {
-          const binding=data.bindings?.[p.name];
-          const isBound=binding&&binding.mode!=='literal';
+          const binding = data.bindings?.[p.name];
+          const isBound = binding && binding.mode !== 'literal';
 
           return (
-            <div key={p.name} className={`hydra-node__param-preview ${isBound? 'hydra-node__param-preview--bound':''}`}>
-              {p.canBind&&(
+            <div key={p.name} className={`hydra-node__param-preview ${isBound ? 'hydra-node__param-preview--bound' : ''}`}>
+              {p.canBind && (
                 <Handle
                   type="target"
                   position={Position.Left}
                   id={`param-in:${p.name}`}
-                  className="hydra-handle hydra-handle--param-in"
+                  className="hydra-handle"
                   title={`Bind ${p.name}`}
-                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     const state = useGraphStore.getState();
@@ -214,8 +210,8 @@ function TransformNode({ id, data, selected }: NodeProps&{ data: HydraNodeData }
         type="source"
         position={Position.Right}
         id="texture-out"
-        className="hydra-handle hydra-handle--texture-out"
-        onMouseDown={(e) => e.stopPropagation()}
+        className="hydra-handle"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           const state = useGraphStore.getState();
