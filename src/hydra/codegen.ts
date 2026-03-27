@@ -23,27 +23,40 @@ export function generateHydraCode(
   edges: Edge[],
 ): string {
   try {
-    const outputNodes = nodes.filter((n) => n.data?.nodeType === 'output');
+    // Strategy: Find all nodes that have no OUTGOING edges.
+    // These are the "terminals" of their respective subgraphs.
+    const terminalNodes = nodes.filter((n) => {
+      const outgoing = edges.some((e) => e.source === n.id);
+      return !outgoing;
+    });
 
-    if (outputNodes.length === 0) return '// No output nodes (\'out\') connected to the network';
+    if (terminalNodes.length === 0 && nodes.length > 0) {
+      // If we have nodes but all are in a loop (unlikely but possible), 
+      // or if we have only nodes with outgoing edges (mismatch).
+      // Let's just pick all sources then.
+      return `// No terminal nodes found. Graph state:\n// Nodes: ${nodes.length}, Edges: ${edges.length}`;
+    }
 
-    const codeLines: CodeLine[] = [];
+    if (nodes.length === 0) return '// Add nodes to generate Hydra code';
 
-    for (const outputNode of outputNodes) {
-      const chain = buildChainFromOutput(outputNode, nodes, edges);
-      if (chain) {
-        codeLines.push(chain);
+    const codeLines: string[] = [];
+    const processedNodes = new Set<string>();
+
+    for (const node of terminalNodes) {
+      if (node.data.nodeType === 'output') {
+        const chain = buildChainFromOutput(node, nodes, edges);
+        if (chain) codeLines.push(chain.code);
+      } else {
+        const expr = buildNodeExpression(node.id, nodes, edges, new Set());
+        if (expr) codeLines.push(expr);
       }
     }
 
     if (codeLines.length === 0) {
-      return '// Hydra detected output nodes, but they are not connected to a source chain.\n// Connect a Source node (like osc or noise) to generate code.';
+      return '// Connect nodes to build a visual chain';
     }
 
-    // Sort by output buffer for consistent ordering
-    codeLines.sort((a, b) => a.outputBuffer.localeCompare(b.outputBuffer));
-
-    return codeLines.map((l) => l.code).join('\n\n');
+    return codeLines.join('\n\n');
   } catch (err) {
     console.error('Code generation failed:', err);
     return `// Code generation failed: ${err instanceof Error ? err.message : String(err)}`;
