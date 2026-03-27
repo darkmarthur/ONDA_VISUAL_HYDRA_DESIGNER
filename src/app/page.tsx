@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 
 // Dynamic import to prevent SSR issues with React Flow and Hydra
-const HydraEditor = dynamic(() => import('../components/HydraEditor'), {
+const HydraEditor=dynamic(() => import('../components/HydraEditor'), {
   ssr: false,
   loading: () => (
     <div

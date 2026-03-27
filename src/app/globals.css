@@ -242,6 +242,40 @@ html, body {
   gap: 8px;
 }
 
+.toolbar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.toolbar__btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.toolbar__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .toolbar__divider {
   width: 1px;
   height: 24px;
@@ -596,7 +630,7 @@ html, body {
 .hydra-node__header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-subtle);
   background: linear-gradient(
@@ -608,7 +642,9 @@ html, body {
 }
 
 .hydra-node__icon {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--node-accent, var(--text-secondary));
   filter: drop-shadow(0 0 4px var(--node-accent));
 }
@@ -624,6 +660,8 @@ html, body {
   display: flex;
   flex-direction: column;
   flex: 1;
+  justify-content: center;
+  gap: 1px;
 }
 
 .hydra-node__badge {
@@ -673,7 +711,7 @@ html, body {
 }
 
 .hydra-node__params--combine {
-  padding-left: 14px;
+  padding-left: 56px;
 }
 
 .hydra-node__param-preview {
@@ -715,17 +753,20 @@ html, body {
 
 .hydra-node__input-label {
   position: absolute;
-  left: 6px;
+  left: 12px;
   font-size: 8px;
   color: var(--text-tertiary);
   font-family: var(--font-mono);
-  letter-spacing: 0.3px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   transform: translateY(-50%);
   background-color: var(--bg-elevated);
-  padding: 2px 4px;
-  border-radius: 4px;
-  box-shadow: 0 0 4px var(--bg-deep);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 4px var(--bg-deep);
+  pointer-events: auto;
 }
 
 .hydra-node__input-label--secondary {
