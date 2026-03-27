@@ -22,27 +22,32 @@ export function generateHydraCode(
   nodes: Node<HydraNodeData>[],
   edges: Edge[],
 ): string {
-  const outputNodes = nodes.filter((n) => n.data.nodeType === 'output');
+  try {
+    const outputNodes = nodes.filter((n) => n.data?.nodeType === 'output');
 
-  if (outputNodes.length === 0) return '// No output nodes connected';
+    if (outputNodes.length === 0) return '// No output nodes (\'out\') connected to the network';
 
-  const codeLines: CodeLine[] = [];
+    const codeLines: CodeLine[] = [];
 
-  for (const outputNode of outputNodes) {
-    const chain = buildChainFromOutput(outputNode, nodes, edges);
-    if (chain) {
-      codeLines.push(chain);
+    for (const outputNode of outputNodes) {
+      const chain = buildChainFromOutput(outputNode, nodes, edges);
+      if (chain) {
+        codeLines.push(chain);
+      }
     }
+
+    if (codeLines.length === 0) {
+      return '// Hydra detected output nodes, but they are not connected to a source chain.\n// Connect a Source node (like osc or noise) to generate code.';
+    }
+
+    // Sort by output buffer for consistent ordering
+    codeLines.sort((a, b) => a.outputBuffer.localeCompare(b.outputBuffer));
+
+    return codeLines.map((l) => l.code).join('\n\n');
+  } catch (err) {
+    console.error('Code generation failed:', err);
+    return `// Code generation failed: ${err instanceof Error ? err.message : String(err)}`;
   }
-
-  if (codeLines.length === 0) {
-    return '// Connect a source to an output to generate code';
-  }
-
-  // Sort by output buffer for consistent ordering
-  codeLines.sort((a, b) => a.outputBuffer.localeCompare(b.outputBuffer));
-
-  return codeLines.map((l) => l.code).join('\n\n');
 }
 
 /**

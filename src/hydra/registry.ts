@@ -530,6 +530,15 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
       { name: 'amount', type: 'float', default: 1, min: -2, max: 2, step: 0.01 },
     ],
   },
+  {
+    name: 'out',
+    type: 'src', // Pseudo-type
+    category: 'output',
+    description: 'Output terminal (o0, o1, o2, o3)',
+    params: [
+      { name: 'buffer', type: 'int', default: 0, min: 0, max: 3, step: 1 },
+    ],
+  },
 ];
 
 // ─── Lookup helpers ──────────────────────────────────────────────────────────

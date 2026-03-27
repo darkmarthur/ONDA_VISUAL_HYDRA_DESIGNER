@@ -18,7 +18,7 @@ import {
   EdgeChange,
 } from '@xyflow/react';
 import { HydraNodeData, HydraOutput, HydraNodeType } from '@/hydra/types';
-import { getHydraFunction } from '@/hydra/registry';
+import { getHydraFunction, categoryMeta } from '@/hydra/registry';
 import { isValidConnection } from '@/hydra/validation';
 import { generateHydraCode } from '@/hydra/codegen';
 
@@ -73,8 +73,9 @@ function generateNodeId(): string {
   return `node_${Date.now()}_${nodeIdCounter++}`;
 }
 
-function determineNodeType(hydraType: string): HydraNodeType {
-  if (hydraType === 'src') return 'source';
+function determineNodeType(fnDef: { name: string; type: string; category: string }): HydraNodeType {
+  if (fnDef.category === 'output' || fnDef.name === 'out') return 'output';
+  if (fnDef.type === 'src') return 'source';
   return 'transform';
 }
 
@@ -133,7 +134,7 @@ export const useGraphStore = create<GraphState>()(
     let edgeColor = '#6366f1'; // default accent-primary
     if (sourceNode) {
       const category = sourceNode.data.functionDef.category;
-      const meta = require('@/hydra/registry').categoryMeta[category];
+      const meta = categoryMeta[category];
       if (meta) {
         edgeColor = meta.color;
       }
@@ -159,11 +160,11 @@ export const useGraphStore = create<GraphState>()(
       params[p.name] = p.default;
     });
 
-    const nodeType = determineNodeType(fnDef.type);
+    const nodeType = determineNodeType(fnDef);
 
     const newNode: Node<HydraNodeData> = {
       id: generateNodeId(),
-      type: nodeType === 'source' ? 'hydraSource' : 'hydraTransform',
+      type: nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : 'hydraTransform'),
       position,
       data: {
         hydraFunction: hydraFunctionName,
@@ -175,6 +176,7 @@ export const useGraphStore = create<GraphState>()(
     };
 
     set((state) => ({ nodes: [...state.nodes, newNode] }));
+    get().regenerateCode();
   },
 
   addAndConnectNode: (hydraFunctionName, position, connectFrom) => {
@@ -185,12 +187,12 @@ export const useGraphStore = create<GraphState>()(
     const params: Record<string, number> = {};
     fnDef.params.forEach((p) => { params[p.name] = p.default; });
 
-    const nodeType = determineNodeType(fnDef.type);
+    const nodeType = determineNodeType(fnDef);
     const newNodeId = generateNodeId();
 
     const newNode: Node<HydraNodeData> = {
       id: newNodeId,
-      type: nodeType === 'source' ? 'hydraSource' : 'hydraTransform',
+      type: nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : 'hydraTransform'),
       position,
       data: {
         hydraFunction: hydraFunctionName,
@@ -211,7 +213,7 @@ export const useGraphStore = create<GraphState>()(
       const sourceNode = get().nodes.find(n => n.id === connectFrom.nodeId);
       if (sourceNode) {
         const cat = sourceNode.data.functionDef.category;
-        const meta = require('@/hydra/registry').categoryMeta[cat];
+        const meta = categoryMeta[cat];
         if (meta) edgeColor = meta.color;
       }
 
@@ -227,7 +229,7 @@ export const useGraphStore = create<GraphState>()(
     } else {
       // Pulling backward from a target input, connecting the new node's output to it.
       const cat = fnDef.category;
-      const meta = require('@/hydra/registry').categoryMeta[cat];
+      const meta = categoryMeta[cat];
       if (meta) edgeColor = meta.color;
 
       newEdge = {
@@ -548,10 +550,10 @@ export const useGraphStore = create<GraphState>()(
           const fnDef = getHydraFunction(n.data.hydraFunction);
           if (!fnDef) return null;
 
-          const nodeType = determineNodeType(fnDef.type);
+          const nodeType = determineNodeType(fnDef);
           return {
             id: n.id,
-            type: n.type || (nodeType === 'source' ? 'hydraSource' : 'hydraTransform'),
+            type: n.type || (nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : 'hydraTransform')),
             position: n.position,
             data: {
               hydraFunction: n.data.hydraFunction,
@@ -629,18 +631,14 @@ export function addOutputNode(
   const store = useGraphStore.getState();
   const bufferIndex = parseInt(buffer.slice(1), 10);
 
+  const fnDef = getHydraFunction('out')!;
   const newNode: Node<HydraNodeData> = {
     id: generateNodeId(),
     type: 'hydraOutput',
     position,
     data: {
       hydraFunction: 'out',
-      functionDef: {
-        name: 'out',
-        type: 'src', // special — not really src but uses its own handle
-        category: 'output',
-        params: [],
-      },
+      functionDef: fnDef,
       params: { buffer: bufferIndex },
       label: `out(${buffer})`,
       nodeType: 'output',
@@ -648,6 +646,7 @@ export function addOutputNode(
   };
 
   useGraphStore.setState((state) => ({ nodes: [...state.nodes, newNode] }));
+  useGraphStore.getState().regenerateCode();
 }
 
 export function addAndConnectOutputNode(
@@ -658,18 +657,14 @@ export function addAndConnectOutputNode(
   const bufferIndex = parseInt(buffer.slice(1), 10);
   const newNodeId = generateNodeId();
 
+  const fnDef = getHydraFunction('out')!;
   const newNode: Node<HydraNodeData> = {
     id: newNodeId,
     type: 'hydraOutput',
     position,
     data: {
       hydraFunction: 'out',
-      functionDef: {
-        name: 'out',
-        type: 'src',
-        category: 'output',
-        params: [],
-      },
+      functionDef: fnDef,
       params: { buffer: bufferIndex },
       label: `out(${buffer})`,
       nodeType: 'output',
@@ -694,4 +689,5 @@ export function addAndConnectOutputNode(
     nodes: [...state.nodes, newNode],
     edges: newEdge ? [...state.edges, newEdge] : state.edges 
   }));
+  useGraphStore.getState().regenerateCode();
 }
