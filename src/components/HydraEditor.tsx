@@ -13,15 +13,18 @@ import Inspector from './panels/Inspector';
 import CodePanel from './panels/CodePanel';
 import HydraPreview from './preview/HydraPreview';
 import Toolbar from './panels/Toolbar';
+import TabMenu from './panels/TabMenu';
 
 export default function HydraEditor() {
   const [showCode, setShowCode] = useState(true);
+  const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string }>({ open: false });
 
   useEffect(() => {
     const undo = useGraphStore.temporal.getState().undo;
     const redo = useGraphStore.temporal.getState().redo;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo / Redo
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -29,11 +32,32 @@ export default function HydraEditor() {
         } else {
           undo();
         }
+        return;
+      }
+
+      // Tab Menu toggle
+      if (e.key === 'Tab') {
+        // Only trigger if we aren't inside an input element that naturally uses Tab
+        // (unless it's the tab menu search input itself, handled inside TabMenu component)
+        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+          return;
+        }
+
+        e.preventDefault();
+        setTabMenuConfig({ open: true });
       }
     };
 
+    const handleCustomMenu = (e: any) => {
+      setTabMenuConfig({ open: true, insertEdgeId: e.detail?.insertEdgeId });
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-tab-menu', handleCustomMenu);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-tab-menu', handleCustomMenu);
+    };
   }, []);
 
   return (
@@ -68,6 +92,13 @@ export default function HydraEditor() {
           {showCode && <CodePanel />}
         </div>
       </div>
+
+      {tabMenuConfig.open && (
+        <TabMenu 
+          onClose={() => setTabMenuConfig({ open: false })} 
+          insertEdgeId={tabMenuConfig.insertEdgeId}
+        />
+      )}
     </div>
   );
 }

@@ -31,11 +31,8 @@ export function isValidConnection(
   if (source === target) return false;
   if (!source || !target || !sourceHandle || !targetHandle) return false;
 
-  // Rule: no duplicate connections to same input handle
-  const existingEdge = edges.find(
-    (e) => e.target === target && e.targetHandle === targetHandle
-  );
-  if (existingEdge) return false;
+  // Rule: we allow connecting to an already occupied handle 
+  // because graphStore.onConnect will automatically replace the old edge.
 
   const sourceNode = nodes.find((n) => n.id === source);
   const targetNode = nodes.find((n) => n.id === target);

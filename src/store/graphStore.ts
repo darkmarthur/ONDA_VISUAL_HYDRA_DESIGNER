@@ -37,6 +37,7 @@ interface GraphState {
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   addNode: (hydraFunctionName: string, position: { x: number; y: number }) => void;
+  insertNodeOnEdge: (edgeId: string, hydraFunctionName: string) => void;
   removeNode: (nodeId: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
   removeEdge: (edgeId: string) => void;
@@ -156,6 +157,83 @@ export const useGraphStore = create<GraphState>()(
     };
 
     set((state) => ({ nodes: [...state.nodes, newNode] }));
+  },
+
+  insertNodeOnEdge: (edgeId, hydraFunctionName) => {
+    const { nodes, edges } = get();
+    const edge = edges.find((e) => e.id === edgeId);
+    if (!edge) return;
+
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+    if (!sourceNode || !targetNode) return;
+
+    // Obtain function definition and build new node
+    const fnDef = require('@/hydra/registry').getHydraFunction(hydraFunctionName);
+    if (!fnDef) return;
+
+    const params: Record<string, number> = {};
+    fnDef.params.forEach((p: any) => {
+      params[p.name] = p.default;
+    });
+
+    const nodeType = determineNodeType(fnDef.type);
+    const newNodeId = generateNodeId();
+
+    const newNode: Node<HydraNodeData> = {
+      id: newNodeId,
+      type: nodeType === 'source' ? 'hydraSource' : 'hydraTransform',
+      position: {
+        x: (sourceNode.position.x + targetNode.position.x) / 2,
+        y: (sourceNode.position.y + targetNode.position.y) / 2,
+      },
+      data: {
+        hydraFunction: hydraFunctionName,
+        functionDef: fnDef,
+        params,
+        label: hydraFunctionName,
+        nodeType,
+      },
+    };
+
+    // Calculate edge colors
+    let sourceColor = '#6366f1';
+    const sourceCatMeta = require('@/hydra/registry').categoryMeta[sourceNode.data.functionDef.category];
+    if (sourceCatMeta) sourceColor = sourceCatMeta.color;
+
+    let newColor = '#6366f1';
+    const newCatMeta = require('@/hydra/registry').categoryMeta[fnDef.category];
+    if (newCatMeta) newColor = newCatMeta.color;
+
+    // Create intermediate edges
+    const edge1: Edge = {
+      id: `e-${edge.source}-${newNodeId}`,
+      source: edge.source,
+      sourceHandle: edge.sourceHandle,
+      target: newNodeId,
+      targetHandle: 'texture-in',
+      animated: true,
+      style: { stroke: sourceColor, strokeWidth: 2 },
+    };
+
+    const edge2: Edge = {
+      id: `e-${newNodeId}-${edge.target}`,
+      source: newNodeId,
+      sourceHandle: 'texture-out',
+      target: edge.target,
+      targetHandle: edge.targetHandle,
+      animated: true,
+      style: { stroke: newColor, strokeWidth: 2 },
+    };
+
+    const newEdges = edges.filter((e) => e.id !== edgeId).concat([edge1, edge2]);
+
+    set((state) => ({
+      nodes: [...state.nodes, newNode],
+      edges: newEdges,
+    }));
+
+    get().regenerateCode();
   },
 
   removeNode: (nodeId) => {

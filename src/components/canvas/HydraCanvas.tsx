@@ -176,7 +176,9 @@ function HydraCanvasInner() {
             <button
               className="toolbar__dropdown-item"
               onClick={() => {
-                alert('Insert node feature coming soon!');
+                window.dispatchEvent(
+                  new CustomEvent('open-tab-menu', { detail: { insertEdgeId: edgeMenu.id } })
+                );
                 setEdgeMenu(null);
               }}
             >

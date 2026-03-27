@@ -35,7 +35,7 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
         position={Position.Left}
         id="texture-in"
         className="hydra-handle hydra-handle--texture-in"
-        style={{ top: isCombine ? '35%' : '50%' }}
+        style={{ top: isCombine ? '45%' : '50%' }}
       />
 
       {/* Secondary texture input (only for combine/combineCoord) */}
@@ -45,7 +45,7 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
           position={Position.Left}
           id="texture-secondary"
           className="hydra-handle hydra-handle--texture-secondary"
-          style={{ top: '65%' }}
+          style={{ top: '75%' }}
         />
       )}
 
@@ -65,14 +65,14 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
       {/* Visual indicator for combine nodes */}
       {isCombine && (
         <div className="hydra-node__combine-indicator">
-          <div className="hydra-node__input-label" style={{ top: '28%' }}>main</div>
-          <div className="hydra-node__input-label hydra-node__input-label--secondary" style={{ top: '58%' }}>
-            texture
+          <div className="hydra-node__input-label" style={{ top: '45%' }}>main</div>
+          <div className="hydra-node__input-label hydra-node__input-label--secondary" style={{ top: '75%' }}>
+            text
           </div>
         </div>
       )}
 
-      <div className="hydra-node__params">
+      <div className={`hydra-node__params ${isCombine ? 'hydra-node__params--combine' : ''}`}>
         {data.functionDef.params.slice(0, 2).map((p) => (
           <div key={p.name} className="hydra-node__param-preview">
             <span className="hydra-node__param-name">{p.name}</span>

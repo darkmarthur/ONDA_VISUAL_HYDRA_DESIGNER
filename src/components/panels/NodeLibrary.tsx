@@ -8,6 +8,7 @@
 import React, { useState, DragEvent } from 'react';
 import { hydraFunctionRegistry, categoryMeta } from '@/hydra/registry';
 import { HydraCategory } from '@/hydra/types';
+import { useGraphStore } from '@/store/graphStore';
 
 const categories: { key: HydraCategory; label: string }[] = [
   { key: 'source', label: 'Source' },
@@ -20,6 +21,9 @@ const categories: { key: HydraCategory; label: string }[] = [
 export default function NodeLibrary() {
   const [expandedCategory, setExpandedCategory] = useState<string>('source');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const addNode = useGraphStore((s) => s.addNode);
+  const { addOutputNode } = require('@/store/graphStore');
 
   const filteredFunctions = searchQuery
     ? hydraFunctionRegistry.filter((fn) =>
@@ -43,19 +47,42 @@ export default function NodeLibrary() {
     event.dataTransfer.effectAllowed = 'move';
   };
 
+  const onDoubleClickNode = (functionName: string) => {
+    const offset = Math.random() * 40;
+    addNode(functionName, { x: 200 + offset, y: 200 + offset });
+  };
+
+  const onDoubleClickOutput = (buffer: string) => {
+    const offset = Math.random() * 40;
+    addOutputNode(buffer as any, { x: 400 + offset, y: 200 + offset });
+  };
+
+  if (isCollapsed) {
+    return (
+      <aside className="node-library node-library--collapsed" style={{ width: '40px', padding: 0, overflow: 'hidden', borderRight: '1px solid var(--border-subtle)', background: 'var(--bg-secondary)', cursor: 'pointer' }} onClick={() => setIsCollapsed(false)}>
+        <div style={{ writingMode: 'vertical-rl', textAlign: 'center', margin: 'auto', padding: '16px 0', fontSize: '11px', color: 'var(--text-tertiary)', letterSpacing: '2px', pointerEvents: 'none' }}>
+          ▸ SHOW LIBRARY
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="node-library">
-      <div className="node-library__header">
+      <div className="node-library__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="node-library__title">Nodes</h2>
-        <div className="node-library__search">
-          <input
-            type="text"
-            placeholder="Search functions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="node-library__search-input"
-          />
-        </div>
+        <button onClick={() => setIsCollapsed(true)} className="toolbar__btn" style={{ padding: '2px 6px', fontSize: '10px' }} title="Collapse Library">
+          ◂
+        </button>
+      </div>
+      <div className="node-library__search" style={{ padding: '0 16px 16px' }}>
+        <input
+          type="text"
+          placeholder="Search functions..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="node-library__search-input"
+        />
       </div>
 
       <div className="node-library__content">
@@ -73,6 +100,7 @@ export default function NodeLibrary() {
                     className="node-library__item"
                     draggable
                     onDragStart={(e) => onDragStart(e, fn.name)}
+                    onDoubleClick={() => onDoubleClickNode(fn.name)}
                     style={{ '--item-color': meta?.color } as React.CSSProperties}
                   >
                     <span className="node-library__item-icon">{meta?.icon}</span>
@@ -121,6 +149,7 @@ export default function NodeLibrary() {
                           className="node-library__item"
                           draggable
                           onDragStart={(e) => onDragStart(e, fn.name)}
+                          onDoubleClick={() => onDoubleClickNode(fn.name)}
                           title={fn.description}
                           style={{ '--item-color': meta?.color } as React.CSSProperties}
                         >
@@ -163,6 +192,7 @@ export default function NodeLibrary() {
                       className="node-library__item"
                       draggable
                       onDragStart={(e) => onOutputDragStart(e, buf)}
+                      onDoubleClick={() => onDoubleClickOutput(buf)}
                       style={{ '--item-color': '#ef4444' } as React.CSSProperties}
                     >
                       <span className="node-library__item-name">out({buf})</span>
