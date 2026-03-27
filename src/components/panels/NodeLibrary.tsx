@@ -6,9 +6,34 @@
 'use client';
 
 import React, { useState, DragEvent } from 'react';
+import { 
+  Zap, 
+  Box, 
+  Sun, 
+  Layers, 
+  Activity, 
+  Monitor, 
+  ChevronRight, 
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Grid
+} from 'lucide-react';
 import { hydraFunctionRegistry, categoryMeta } from '@/hydra/registry';
 import { HydraCategory } from '@/hydra/types';
 import { useGraphStore } from '@/store/graphStore';
+
+const CategoryIcon = ({ category, size = 14 }: { category: string; size?: number }) => {
+  switch (category) {
+    case 'source': return <Zap size={size} />;
+    case 'geometry': return <Box size={size} />;
+    case 'color': return <Sun size={size} />;
+    case 'blend': return <Layers size={size} />;
+    case 'modulate': return <Activity size={size} />;
+    case 'output': return <Monitor size={size} />;
+    default: return <Grid size={size} />;
+  }
+};
 
 const categories: { key: HydraCategory; label: string }[] = [
   { key: 'source', label: 'Source' },
@@ -60,8 +85,11 @@ export default function NodeLibrary() {
   if (isCollapsed) {
     return (
       <aside className="node-library node-library--collapsed" style={{ width: '40px', padding: 0, overflow: 'hidden', borderRight: '1px solid var(--border-subtle)', background: 'var(--bg-secondary)', cursor: 'pointer' }} onClick={() => setIsCollapsed(false)}>
-        <div style={{ writingMode: 'vertical-rl', textAlign: 'center', margin: 'auto', padding: '16px 0', fontSize: '11px', color: 'var(--text-tertiary)', letterSpacing: '2px', pointerEvents: 'none' }}>
-          ▸ SHOW LIBRARY
+        <button className="node-library__expand-btn" style={{ width: '100%', padding: '12px 0', background: 'transparent', border: 'none', color: 'var(--text-tertiary)' }}>
+          <PanelLeftOpen size={16} />
+        </button>
+        <div style={{ writingMode: 'vertical-rl', textAlign: 'center', margin: 'auto', padding: '16px 0', fontSize: '11px', color: 'var(--text-tertiary)', letterSpacing: '2px', pointerEvents: 'none', textTransform: 'uppercase' }}>
+          Nodes
         </div>
       </aside>
     );
@@ -71,8 +99,8 @@ export default function NodeLibrary() {
     <aside className="node-library">
       <div className="node-library__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="node-library__title">Nodes</h2>
-        <button onClick={() => setIsCollapsed(true)} className="toolbar__btn" style={{ padding: '2px 6px', fontSize: '10px' }} title="Collapse Library">
-          ◂
+        <button onClick={() => setIsCollapsed(true)} className="node-library__collapse-btn" style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '4px' }} title="Collapse Library">
+          <PanelLeftClose size={16} />
         </button>
       </div>
       <div className="node-library__search" style={{ padding: '0 16px 16px' }}>
@@ -103,7 +131,9 @@ export default function NodeLibrary() {
                     onDoubleClick={() => onDoubleClickNode(fn.name)}
                     style={{ '--item-color': meta?.color } as React.CSSProperties}
                   >
-                    <span className="node-library__item-icon">{meta?.icon}</span>
+                    <span className="node-library__item-icon">
+                      <CategoryIcon category={fn.category} size={12} />
+                    </span>
                     <span className="node-library__item-name">{fn.name}</span>
                     <span className="node-library__item-type">{fn.type}</span>
                   </div>
@@ -133,11 +163,13 @@ export default function NodeLibrary() {
                     }
                     style={{ '--cat-color': meta?.color } as React.CSSProperties}
                   >
-                    <span className="node-library__category-icon">{meta?.icon}</span>
+                    <span className="node-library__category-icon">
+                      <CategoryIcon category={cat.key} />
+                    </span>
                     <span className="node-library__category-label">{cat.label}</span>
                     <span className="node-library__category-count">{functions.length}</span>
                     <span className="node-library__category-chevron">
-                      {expandedCategory === cat.key ? '▾' : '▸'}
+                      {expandedCategory === cat.key ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </span>
                   </button>
 
@@ -176,11 +208,13 @@ export default function NodeLibrary() {
                 }
                 style={{ '--cat-color': '#ef4444' } as React.CSSProperties}
               >
-                <span className="node-library__category-icon">▶</span>
+                <span className="node-library__category-icon">
+                  <Monitor size={14} />
+                </span>
                 <span className="node-library__category-label">Output</span>
                 <span className="node-library__category-count">4</span>
                 <span className="node-library__category-chevron">
-                  {expandedCategory === 'output' ? '▾' : '▸'}
+                  {expandedCategory === 'output' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </span>
               </button>
 

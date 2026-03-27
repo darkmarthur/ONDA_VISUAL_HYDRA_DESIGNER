@@ -6,9 +6,34 @@
 'use client';
 
 import React from 'react';
+import { 
+  Activity, 
+  Layers, 
+  Filter, 
+  Box, 
+  Zap, 
+  Monitor, 
+  Grid,
+  Sun,
+  Trash2,
+  RotateCcw
+} from 'lucide-react';
 import { useGraphStore } from '@/store/graphStore';
 import { categoryMeta } from '@/hydra/registry';
 import { HydraParamDef } from '@/hydra/types';
+
+const CategoryIcon = ({ category, size = 14, color }: { category: string; size?: number; color?: string }) => {
+  const iconProps = { size, style: { color: color || 'currentColor' } };
+  switch (category) {
+    case 'source': return <Zap {...iconProps} />;
+    case 'geometry': return <Box {...iconProps} />;
+    case 'color': return <Sun {...iconProps} />;
+    case 'blend': return <Layers {...iconProps} />;
+    case 'modulate': return <Activity {...iconProps} />;
+    case 'output': return <Monitor {...iconProps} />;
+    default: return <Grid {...iconProps} />;
+  }
+};
 
 export default function Inspector() {
   const nodes = useGraphStore((s) => s.nodes);
@@ -25,7 +50,9 @@ export default function Inspector() {
     return (
       <aside className="inspector">
         <div className="inspector__empty">
-          <div className="inspector__empty-icon">⬡</div>
+          <div className="inspector__empty-icon">
+            <Grid size={48} strokeWidth={1} />
+          </div>
           <p className="inspector__empty-text">Select a node to inspect its parameters</p>
         </div>
       </aside>
@@ -87,7 +114,9 @@ export default function Inspector() {
     <aside className="inspector">
       <div className="inspector__header" style={{ '--accent': meta?.color || '#6366f1' } as React.CSSProperties}>
         <div className="inspector__title-row">
-          <span className="inspector__icon">{meta?.icon || '⬡'}</span>
+          <span className="inspector__icon">
+            <CategoryIcon category={data.functionDef.category} size={20} color="var(--accent)" />
+          </span>
           <h3 className="inspector__title">{data.label}</h3>
         </div>
         <span className="inspector__category-badge" style={{ background: meta?.color }}>
@@ -199,12 +228,14 @@ export default function Inspector() {
             });
           }}
         >
+          <RotateCcw size={12} style={{ marginRight: '6px' }} />
           Reset Defaults
         </button>
         <button
           className="inspector__btn inspector__btn--delete"
           onClick={() => removeNode(selectedNode.id)}
         >
+          <Trash2 size={12} style={{ marginRight: '6px' }} />
           Delete Node
         </button>
       </div>

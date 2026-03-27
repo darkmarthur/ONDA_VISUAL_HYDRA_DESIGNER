@@ -7,6 +7,7 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
+import { Play, Monitor } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { useGraphStore } from '@/store/graphStore';
 
@@ -74,7 +75,9 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         }}
         title="Double-click to set alias"
       >
-        <span className="hydra-node__icon">▹</span>
+        <span className="hydra-node__icon">
+          <Play size={14} strokeWidth={2.5} />
+        </span>
         {isEditingAlias ? (
           <input
             ref={inputRef}
@@ -93,7 +96,6 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         ) : (
           <div className="hydra-node__title-group">
             <span className="hydra-node__label">{data.alias || 'out'}</span>
-            {data.alias && <span className="hydra-node__badge">out</span>}
           </div>
         )}
         {hasError && (

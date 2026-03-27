@@ -7,6 +7,7 @@
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Activity, Box, Sun, Type } from 'lucide-react';
 import { HydraNodeData } from '@/hydra/types';
 import { categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
@@ -48,7 +49,9 @@ function SourceNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
         }}
         title="Double-click to set alias"
       >
-        <span className="hydra-node__icon">{meta?.icon || '◉'}</span>
+        <span className="hydra-node__icon">
+          <Activity size={14} strokeWidth={2.5} />
+        </span>
         {isEditingAlias ? (
           <input
             ref={inputRef}

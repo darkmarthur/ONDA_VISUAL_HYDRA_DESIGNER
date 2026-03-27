@@ -1,9 +1,32 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  Activity, 
+  Layers, 
+  Filter, 
+  Box, 
+  Zap, 
+  Monitor, 
+  Search,
+  Grid,
+  Sun
+} from 'lucide-react';
 import { hydraFunctionRegistry, categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
 import { HydraCategory } from '@/hydra/types';
+
+const CategoryIcon = ({ category, size = 14 }: { category: string; size?: number }) => {
+  switch (category) {
+    case 'source': return <Zap size={size} />;
+    case 'geometry': return <Box size={size} />;
+    case 'color': return <Sun size={size} />;
+    case 'blend': return <Layers size={size} />;
+    case 'modulate': return <Activity size={size} />;
+    case 'output': return <Monitor size={size} />;
+    default: return <Grid size={size} />;
+  }
+};
 
 interface TabMenuProps {
   onClose: () => void;
@@ -192,7 +215,7 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
             <div className="tab-menu__empty">No matches found</div>
           ) : (
             results.map((fn, idx) => {
-              const meta = categoryMeta[fn.category] || { color: '#ef4444', icon: '▶' };
+              const meta = categoryMeta[fn.category] || { color: '#ef4444' };
               const isSelected = idx === selectedIndex;
               return (
                 <div
@@ -202,7 +225,9 @@ export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMen
                   onClick={() => handleSelect(fn)}
                   style={{ '--cat-color': meta.color } as React.CSSProperties}
                 >
-                  <span className="tab-menu__item-icon">{meta.icon}</span>
+                  <span className="tab-menu__item-icon">
+                    <CategoryIcon category={fn.category} size={16} />
+                  </span>
                   <div className="tab-menu__item-info">
                     <div className="tab-menu__item-name">{fn.name}</div>
                     {fn.description && <div className="tab-menu__item-desc">{fn.description}</div>}

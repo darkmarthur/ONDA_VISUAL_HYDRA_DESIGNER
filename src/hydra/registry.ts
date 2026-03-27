@@ -550,13 +550,13 @@ export function getHydraFunctionsByType(type: string): HydraFunctionDef[] {
 }
 
 // Category metadata for the UI
-export const categoryMeta: Record<string, { label: string; color: string; icon: string }> = {
-  source:         { label: 'Source',    color: '#f472b6', icon: '✧' },
-  geometry:       { label: 'Geometry',  color: '#60a5fa', icon: '⬡' },
-  color:          { label: 'Color',     color: '#a78bfa', icon: '◐' },
-  blend:          { label: 'Blend',     color: '#34d399', icon: '⧉' },
-  modulate:       { label: 'Modulate',  color: '#fbbf24', icon: '∿' },
-  externalSource: { label: 'External',  color: '#f97316', icon: '▣' },
-  output:         { label: 'Output',    color: '#ef4444', icon: '▹' },
-  settings:       { label: 'Settings',  color: '#94a3b8', icon: '⚙' },
+export const categoryMeta: Record<string, { label: string; color: string }> = {
+  source:         { label: 'Source',    color: '#f472b6' },
+  geometry:       { label: 'Geometry',  color: '#60a5fa' },
+  color:          { label: 'Color',     color: '#a78bfa' },
+  blend:          { label: 'Blend',     color: '#34d399' },
+  modulate:       { label: 'Modulate',  color: '#fbbf24' },
+  externalSource: { label: 'External',  color: '#f97316' },
+  output:         { label: 'Output',    color: '#ef4444' },
+  settings:       { label: 'Settings',  color: '#94a3b8' },
 };

@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useRef, useEffect, useCallback } from 'react';
+import { Monitor, MonitorOff } from 'lucide-react';
 import { useGraphStore } from '@/store/graphStore';
 import { getHydraRuntime } from '@/hydra/runtime';
 
@@ -91,13 +92,12 @@ export default function HydraPreview() {
         </div>
       )}
       <div className="hydra-preview__overlay">
-        <span className="hydra-preview__badge">HYDRA LIVE</span>
         <button 
           className="hydra-preview__toggle"
           onClick={() => setShowPreview(!showPreview)}
           title={showPreview ? 'Disable Preview (Optimize)' : 'Enable Preview'}
         >
-          {showPreview ? '👁' : '✕'}
+          {showPreview ? <Monitor size={14} /> : <MonitorOff size={14} />}
         </button>
       </div>
     </div>

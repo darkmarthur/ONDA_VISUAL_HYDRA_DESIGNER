@@ -2,6 +2,21 @@
 
 import React, { useState, useRef } from 'react';
 import { useGraphStore } from '@/store/graphStore';
+import { 
+  Monitor, 
+  MonitorOff, 
+  Code, 
+  LayoutTemplate, 
+  Save, 
+  FolderOpen, 
+  RotateCcw, 
+  Trash2,
+  ChevronDown,
+  Download,
+  Upload,
+  Hexagon,
+  Globe
+} from 'lucide-react';
 
 export default function Toolbar() {
   const clearGraph = useGraphStore((s) => s.clearGraph);
@@ -87,137 +102,163 @@ export default function Toolbar() {
   return (
     <header className="toolbar">
       <div className="toolbar__brand">
-        <span className="toolbar__logo">◈</span>
+        <span className="toolbar__logo">
+          <Hexagon size={20} fill="currentColor" fillOpacity={0.2} />
+        </span>
         <h1 className="toolbar__title">HYDRA DESIGNER</h1>
       </div>
 
-      <div className="toolbar__mode-switch">
-        <button
-          className={`toolbar__btn toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
-          onClick={() => setEditorMode('visual')}
-        >
-          Visual Editor
-        </button>
-        <button
-          className={`toolbar__btn toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
-          onClick={() => setEditorMode('code')}
-        >
-          Code Editor
-        </button>
-      </div>
-
       <div className="toolbar__actions">
-        {/* Live Window Controls — Always Visible */}
-        <div className="toolbar__action-group toolbar__live-controls">
-          <button 
-            className="toolbar__btn toolbar__btn--live-show" 
-            onClick={launchLiveWindow}
-          >
-            ◱ Show Live
-          </button>
-          <button 
-            className="toolbar__btn toolbar__btn--live-hide"
-            onClick={closeLiveWindow}
-          >
-            ✕ Hide
-          </button>
-        </div>
-
-        {/* Quick Load Last */}
-        <button 
-          className="toolbar__btn" 
-          onClick={() => lastPatch && loadPatch(lastPatch)}
-          disabled={!lastPatch}
-          style={{ opacity: lastPatch ? 1 : 0.5 }}
-        >
-          ⟲ Load Last
-        </button>
-
-        {/* Save */}
-        <div className="toolbar__action-group">
+        {/* Group 1: Workspace Modes */}
+        <div className="toolbar__group">
           <button
-            className="toolbar__btn"
-            onClick={() => { setShowSave(!showSave); setShowMenu(false); }}
+            className={`toolbar__btn toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
+            onClick={() => setEditorMode('visual')}
           >
-            💾 Save
+            <LayoutTemplate size={14} className="toolbar__icon" />
+            Visual Editor
           </button>
-          {showSave && (
-            <div className="toolbar__dropdown">
-              <input
-                type="text"
-                placeholder="Patch name..."
-                value={patchName}
-                onChange={(e) => setPatchName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                className="toolbar__input"
-                autoFocus
-              />
-              <button className="toolbar__dropdown-btn" onClick={handleSave}>
-                Save Patch
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Hamburger Menu (Projects / Import / Export) */}
-        <div className="toolbar__action-group">
           <button
-            className="toolbar__btn"
-            onClick={() => { setShowMenu(!showMenu); setShowSave(false); }}
+            className={`toolbar__btn toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
+            onClick={() => setEditorMode('code')}
           >
-            ☰ Menu
+            <Code size={14} className="toolbar__icon" />
+            Code Editor
           </button>
-          {showMenu && (
-            <div className="toolbar__dropdown" style={{ width: '240px' }}>
-              <div style={{ padding: '4px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                Actions
-              </div>
-              <button className="toolbar__dropdown-item" onClick={handleExportJS}>
-                ↳ Export Patch (.js)
-              </button>
-              <button className="toolbar__dropdown-item" onClick={handleImportJS}>
-                ↱ Import Patch (.js)
-              </button>
-              
-              <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-subtle)' }}></div>
-              
-              <div style={{ padding: '4px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                Projects Folder
-              </div>
-              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {savedPatches.length === 0 ? (
-                  <p className="toolbar__dropdown-empty">No saved projects</p>
-                ) : (
-                  savedPatches.map((name) => (
-                    <button
-                      key={name}
-                      className="toolbar__dropdown-item"
-                      style={{ paddingLeft: '16px' }}
-                      onClick={() => {
-                        loadPatch(name);
-                        setShowMenu(false);
-                      }}
-                    >
-                      📁 {name}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Clear */}
-        <button
-          className="toolbar__btn toolbar__btn--danger"
-          onClick={() => {
-            if (window.confirm('Clear the entire patch? This cannot be undone.')) {
-              clearGraph();
-            }
-          }}
-        >
-          🗑 Clear
-        </button>
+        <div className="toolbar__divider" />
+
+        {/* Group 2: Display / Output */}
+        <div className="toolbar__group">
+          <div className="toolbar__action-group toolbar__live-controls">
+            <button 
+              className="toolbar__btn toolbar__btn--live-show" 
+              onClick={launchLiveWindow}
+              title="Open External Preview Window"
+            >
+              <Monitor size={14} className="toolbar__icon" />
+              Show Live
+            </button>
+            <button 
+              className="toolbar__btn toolbar__btn--live-hide"
+              onClick={closeLiveWindow}
+              title="Close External Window"
+            >
+              <MonitorOff size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="toolbar__divider" />
+
+        {/* Group 3: Project / State */}
+        <div className="toolbar__group">
+          <button 
+            className="toolbar__btn" 
+            onClick={() => lastPatch && loadPatch(lastPatch)}
+            disabled={!lastPatch}
+            title="Reload Last Saved State"
+          >
+            <RotateCcw size={14} className="toolbar__icon" />
+            Load Last
+          </button>
+
+          <div className="toolbar__action-group">
+            <button
+              className="toolbar__btn"
+              onClick={() => { setShowSave(!showSave); setShowMenu(false); }}
+            >
+              <Save size={14} className="toolbar__icon" />
+              Save
+            </button>
+            {showSave && (
+              <div className="toolbar__dropdown">
+                <input
+                  type="text"
+                  placeholder="Patch name..."
+                  value={patchName}
+                  onChange={(e) => setPatchName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  className="toolbar__input"
+                  autoFocus
+                />
+                <button className="toolbar__dropdown-btn" onClick={handleSave}>
+                  Save Patch
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="toolbar__action-group">
+            <button
+              className="toolbar__btn"
+              onClick={() => { setShowMenu(!showMenu); setShowSave(false); }}
+            >
+              <FolderOpen size={14} className="toolbar__icon" />
+              Projects
+              <ChevronDown size={12} style={{ marginLeft: '4px', opacity: 0.5 }} />
+            </button>
+            {showMenu && (
+              <div className="toolbar__dropdown" style={{ width: '240px' }}>
+                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Actions
+                </div>
+                <button className="toolbar__dropdown-item" onClick={handleExportJS}>
+                  <Download size={12} style={{ marginRight: '8px' }} />
+                  Export Patch (.js)
+                </button>
+                <button className="toolbar__dropdown-item" onClick={handleImportJS}>
+                  <Upload size={12} style={{ marginRight: '8px' }} />
+                  Import Patch (.js)
+                </button>
+                
+                <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-subtle)' }}></div>
+                
+                <div style={{ padding: '6px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Project List
+                </div>
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {savedPatches.length === 0 ? (
+                    <p className="toolbar__dropdown-empty">No saved projects</p>
+                  ) : (
+                    savedPatches.map((name) => (
+                      <button
+                        key={name}
+                        className="toolbar__dropdown-item"
+                        style={{ paddingLeft: '16px' }}
+                        onClick={() => {
+                          loadPatch(name);
+                          setShowMenu(false);
+                        }}
+                      >
+                        <Globe size={12} style={{ marginRight: '8px', opacity: 0.5 }} />
+                        {name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="toolbar__divider" />
+
+        {/* Group 4: Destructive */}
+        <div className="toolbar__group">
+          <button
+            className="toolbar__btn toolbar__btn--danger"
+            onClick={() => {
+              if (window.confirm('Clear the entire patch? This cannot be undone.')) {
+                clearGraph();
+              }
+            }}
+          >
+            <Trash2 size={14} className="toolbar__icon" />
+            Clear
+          </button>
+        </div>
       </div>
     </header>
   );

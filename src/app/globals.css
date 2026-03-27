@@ -231,7 +231,25 @@ html, body {
 .toolbar__actions {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.toolbar__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-subtle);
+  margin: 0 4px;
+}
+
+.toolbar__icon {
+  opacity: 0.7;
+  margin-right: 6px;
 }
 
 .toolbar__action-group {
@@ -644,7 +662,12 @@ html, body {
 }
 
 .hydra-node__params {
-  padding: 6px 12px 8px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .hydra-node__params--combine {
@@ -1245,18 +1268,8 @@ html, body {
   pointer-events: none;
 }
 
-.hydra-preview__badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: rgba(239, 68, 68, 0.8);
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: white;
-  animation: pulse-badge 2s ease-in-out infinite;
-}
+/* Removed hydra-preview__badge styles */
+
 
 .hydra-preview__toggle {
   background: rgba(0, 0, 0, 0.6);
