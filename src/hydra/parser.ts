@@ -1,7 +1,6 @@
 /**
  * Hydra Parser (Robust Version)
  * Converts Hydra JS code chains into a graph of nodes and edges.
- * Handles line breaks, comments within chains, and complex lambda expressions.
  */
 
 import { getHydraFunction } from './registry';
@@ -16,10 +15,9 @@ interface ParsedCall {
 }
 
 /**
- * Tokenizer that captures tokens needed for Hydra grammar
+ * Tokenizer that captures meaningful Hydra tokens.
  */
 function tokenize(code: string): string[] {
-  // Matches: // comments, function names, numbers, parentheses, dots, commas, arrows (=>), and operators
   const regex = /(\/\/.*)|([a-zA-Z_$][\w$]*)|(-?\d*\.?\d+)|(\()|(\))|(\.)|(,)|(=>)|([+*\/%-])|("[^"]*")|('[^']*')/g;
   const tokens: string[] = [];
   let match;
@@ -40,12 +38,6 @@ class Parser {
   private peek() { return this.tokens[this.current]; }
   private peekNext() { return this.tokens[this.current + 1]; }
   private consume() { return this.tokens[this.current++]; }
-  private expect(val: string) {
-    if (this.peek() !== val) {
-      console.warn(`Expected ${val} but got ${this.peek()}`);
-    }
-    return this.consume();
-  }
 
   private skipNoise() {
     while (this.current < this.tokens.length && 
@@ -60,52 +52,52 @@ class Parser {
       this.skipNoise();
       if (this.current >= this.tokens.length) break;
 
-      const alias = this.parseAlias();
       const chain = this.parseExpression();
       if (chain) {
-        if (alias) chain.alias = alias;
         chains.push(chain);
-      } else if (this.current < this.tokens.length) {
+      } else {
+        // Fallback: Skip one token if we can't parse anything to avoid infinite loop
         this.consume(); 
       }
     }
     return chains;
   }
 
-  private parseAlias(): string | undefined {
-    // Check if previous token was a comment with alias
-    // (This is tricky because skipNoise consumes them)
-    // We'll peek manually
-    return undefined; // Handled better inside parseExpression if needed
-  }
-
   private parseExpression(): ParsedCall | null {
-    const token = this.peek();
-    if (!token || token === '.' || token === ')' || token === ',' ) return null;
+    this.skipNoise();
+    let token = this.peek();
+    
+    // Handle chains starting with dots (auto-heal) or regular functions
+    if (token === '.') {
+       this.consume(); // skip leading dot
+       token = this.peek();
+    }
 
-    // Start of an expression
+    if (!token || token === ')' || token === ',' ) return null;
+
+    // Start of an expression (function call)
     const fn = this.consume();
     if (this.peek() !== '(') return null;
 
     const node = this.parseCall(fn);
+    if (!node) return null;
     
-    // Check for chaining
+    // Continue the chain
     let currentNode = node;
     while (this.current < this.tokens.length) {
+      this.skipNoise();
       const next = this.peek();
       if (next === '.') {
-        this.consume(); // dot
+        this.consume(); 
         this.skipNoise();
         const nextFn = this.consume();
         if (nextFn && this.peek() === '(') {
           const nextCall = this.parseCall(nextFn);
-          currentNode.chain = nextCall;
-          currentNode = nextCall;
-        } else {
-          break; // Invalid chain
-        }
-      } else if (next?.startsWith('//')) {
-        this.consume(); // skip comment and continue looking for dot
+          if (nextCall) {
+            currentNode.chain = nextCall;
+            currentNode = nextCall;
+          } else break;
+        } else break;
       } else {
         break;
       }
@@ -114,55 +106,63 @@ class Parser {
     return node;
   }
 
-  private parseCall(fn: string): ParsedCall {
-    this.expect('(');
+  private parseCall(fn: string): ParsedCall | null {
+    if (this.peek() !== '(') return null;
+    this.consume(); // '('
+
     const args: any[] = [];
     while (this.current < this.tokens.length && this.peek() !== ')') {
+      this.skipNoise();
       const arg = this.parseArgument();
       if (arg !== undefined) args.push(arg);
+      this.skipNoise();
       if (this.peek() === ',') this.consume();
     }
-    this.expect(')');
+
+    // Crucial: ensure we consume the closing parenthesis
+    if (this.peek() === ')') {
+      this.consume();
+    } else {
+      console.warn(`Call to ${fn} missing closing parenthesis`);
+    }
+
     return { fn, args };
   }
 
   private parseArgument(): any {
     const token = this.peek();
-    if (token === ')') return undefined;
+    if (!token || token === ')') return undefined;
 
-    // Check if it's a nested hydra call: fn(
+    // Nested call recursive case
     if (/^[a-zA-Z_$]/.test(token) && this.peekNext() === '(') {
       return this.parseExpression();
     }
 
-    // Check if it's a lambda: () => ...
-    if (token === '(' && (this.peekNext() === ')' || this.peekNext() === 'id' || this.peekNext() === 'v')) {
-      // Very rough lambda detection
-      let level = 0;
-      let expr = '';
-      while (this.current < this.tokens.length) {
-        const t = this.consume();
-        expr += t + (t === ',' ? ' ' : '');
-        if (t === '(') level++;
-        if (t === ')') level--;
-        if (level === 0) break;
-      }
-      // If next is =>, it's definitely a lambda
-      if (this.peek() === '=>') {
-        expr += ' ' + this.consume() + ' ';
-        // Grab the rest of the body until comma or closing paren
-        while (this.current < this.tokens.length && this.peek() !== ',' && this.peek() !== ')') {
-          expr += this.consume();
-        }
-      }
-      return expr;
+    // Capture everything else with parenthesis tracking
+    let expr = '';
+    let level = 0;
+
+    while (this.current < this.tokens.length) {
+      const t = this.peek();
+      
+      // Break at top-level separators
+      if (level === 0 && (t === ',' || t === ')')) break;
+
+      this.consume();
+      expr += t + (t === ',' ? ' ' : '');
+      
+      if (t === '(') level++;
+      else if (t === ')') level--;
     }
 
-    // Default: consume as literal or string
-    let val = this.consume();
-    const num = parseFloat(val);
-    if (!isNaN(num)) return num;
-    return val;
+    // Type conversion
+    const trimmed = expr.trim();
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && !trimmed.includes(' ') && !/[a-zA-Z_$]/.test(trimmed)) {
+      return num;
+    }
+
+    return trimmed || undefined;
   }
 }
 
@@ -179,23 +179,22 @@ export function buildGraphFromCode(
 
   const nodes: Node<HydraNodeData>[] = [];
   const edges: Edge[] = [];
-  let nodeIdCounter = 0;
+  let nextX = 100;
+  let nextY = 100;
 
-  const createNode = (fn: string, args: any[], alias?: string, x = 0, y = 0): Node<HydraNodeData> | null => {
+  const createNode = (fn: string, args: any[], x: number, y: number): Node<HydraNodeData> | null => {
     const fnDef = getHydraFunction(fn);
     if (!fnDef) return null;
 
-    // Try to find existing node by alias or by type/index
+    // Check if we can reuse an existing node to maintain positions
     const existing = existingNodes.find(n => 
-      (alias && n.data.alias === alias) || 
-      (n.data.hydraFunction === fn && !nodes.some(placed => placed.id === n.id))
+      n.data.hydraFunction === fn && !nodes.some(placed => placed.id === n.id)
     );
 
-    const id = existing?.id || `node_${Date.now()}_${nodeIdCounter++}`;
-    const nodeType: HydraNodeType = 
-      fnDef.category === 'output' ? 'output' : 
-      fnDef.category === 'value' ? 'value' : 
-      fnDef.type === 'src' ? 'source' : 'transform';
+    const id = existing?.id || `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const nodeType = fnDef.category === 'output' ? 'output' : 
+                     fnDef.category === 'value' ? 'value' : 
+                     fnDef.type === 'src' ? 'source' : 'transform';
 
     const params: Record<string, any> = {};
     const bindings: Record<string, any> = {};
@@ -205,15 +204,10 @@ export function buildGraphFromCode(
       if (arg === undefined) {
         params[p.name] = p.default;
       } else if (typeof arg === 'string' && (arg.includes('=>') || isNaN(parseFloat(arg)))) {
-        // Handle lambda or complex expression as a body binding
-        params[p.name] = ""; // Visual placeholder
-        bindings[p.name] = {
-           mode: 'expression',
-           expression: arg
-        };
+        params[p.name] = "";
+        bindings[p.name] = { mode: 'expression', expression: arg };
       } else if (typeof arg === 'object' && arg.fn) {
-        // Nested node
-        params[p.name] = p.default;
+        params[p.name] = p.default; // Nested nodes handled below
       } else {
         params[p.name] = arg;
       }
@@ -228,8 +222,7 @@ export function buildGraphFromCode(
         functionDef: fnDef,
         params,
         bindings,
-        label: alias || fn,
-        alias,
+        label: fn,
         nodeType
       }
     };
@@ -239,62 +232,42 @@ export function buildGraphFromCode(
   };
 
   parsedChains.forEach((chain, chainIdx) => {
-    let currentX = 100;
-    let currentY = 100 + (chainIdx * 300);
+    let currentX = nextX;
+    let currentY = nextY + (chainIdx * 250);
     
     let prevNode: Node<HydraNodeData> | null = null;
     let step: ParsedCall | undefined = chain;
 
     while (step) {
-      const node = createNode(step.fn, step.args, step.alias, currentX, currentY);
+      const node = createNode(step.fn, step.args, currentX, currentY);
       
       if (node) {
-        // Primary Chain Connection
         if (prevNode) {
           edges.push({
-            id: `e_${prevNode.id}_${node.id}`,
+            id: `e_${prevNode.id}_${node.id}_${Date.now()}`,
             source: prevNode.id,
             target: node.id,
             sourceHandle: 'texture-out',
             targetHandle: node.data.nodeType === 'output' ? 'output-in' : 'texture-in',
-            type: 'hydra',
-            animated: true
+            type: 'hydra'
           });
         }
 
-        // Nested Node Connections (e.g. modulate(noise()))
+        // Connect nested calls (secondary textures or value inputs)
         step.args.forEach((arg, i) => {
           if (typeof arg === 'object' && arg.fn) {
-            const paramDef = node.data.functionDef.params[i];
-            const nestedNode = createNode(arg.fn, arg.args, undefined, currentX - 250, currentY + 150);
-            if (nestedNode && paramDef) {
-               node.data.bindings = node.data.bindings || {};
-               
-               // If nested node is a source/texture, it's a secondary texture input
-               if (nestedNode.data.nodeType === 'source' || nestedNode.data.nodeType === 'transform') {
-                  node.data.bindings[paramDef.name] = { mode: 'literal' }; // It's a cable connection
+            const nestedNode = createNode(arg.fn, arg.args, currentX - 250, currentY + 150);
+            if (nestedNode) {
+               const paramDef = node.data.functionDef.params[i];
+               if (paramDef) {
+                  const isTexture = nestedNode.data.nodeType === 'source' || nestedNode.data.nodeType === 'transform';
                   edges.push({
-                    id: `e_${nestedNode.id}_${node.id}_sec`,
+                    id: `e_nested_${nestedNode.id}_${node.id}_${i}`,
                     source: nestedNode.id,
                     target: node.id,
-                    sourceHandle: 'texture-out',
-                    targetHandle: 'texture-secondary',
-                    type: 'hydra',
-                    animated: true
-                  });
-               } else {
-                  node.data.bindings[paramDef.name] = {
-                    mode: 'value_node',
-                    boundNodeId: nestedNode.id
-                  };
-                  edges.push({
-                    id: `e_${nestedNode.id}_${node.id}_val`,
-                    source: nestedNode.id,
-                    target: node.id,
-                    sourceHandle: 'value-out',
-                    targetHandle: `param-in:${paramDef.name}`,
-                    type: 'hydra',
-                    animated: true
+                    sourceHandle: isTexture ? 'texture-out' : 'value-out',
+                    targetHandle: isTexture ? 'texture-secondary' : `param-in:${paramDef.name}`,
+                    type: 'hydra'
                   });
                }
             }
@@ -303,9 +276,11 @@ export function buildGraphFromCode(
 
         prevNode = node;
         currentX += 300;
+        nextX = Math.max(nextX, currentX);
       }
       step = step.chain;
     }
+    nextY = Math.max(nextY, currentY + 300);
   });
 
   return { nodes, edges };

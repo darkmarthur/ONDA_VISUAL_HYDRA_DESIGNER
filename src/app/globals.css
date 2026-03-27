@@ -738,6 +738,7 @@ html, body {
   min-height: 24px; /* Slightly taller for better alignment */
   position: relative !important; /* Anchor for handles */
   overflow: visible !important;
+  padding-left: 14px; /* Space for the handle so it doesn't overlap text */
 }
 
 .hydra-node__param-name {
@@ -870,8 +871,17 @@ html, body {
   border: 3px solid var(--bg-primary) !important;
   transition: all var(--transition-fast) !important;
   z-index: 10 !important;
-  pointer-events: auto !important; /* Force clickability even if nodesConnectable is false */
+  pointer-events: auto !important; 
   cursor: pointer !important;
+}
+
+/* Positioning handles on the borders */
+.react-flow__handle-left {
+  left: -7px !important;
+}
+
+.react-flow__handle-right {
+  right: -7px !important;
 }
 
 /* Larger hit area for handles */
