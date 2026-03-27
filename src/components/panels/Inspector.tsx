@@ -36,6 +36,53 @@ export default function Inspector() {
   const meta = categoryMeta[data.functionDef.category];
   const isOutput = data.nodeType === 'output';
 
+  const formatParamDefList = (params: HydraParamDef[]) => {
+    return params.map(p => `${p.name} = ${p.default}`).join(', ');
+  };
+
+  const getCanonicalSignature = () => {
+    if (isOutput) return `.out(oN)`;
+    const paramsStr = formatParamDefList(data.functionDef.params);
+    if (data.functionDef.type === 'src') {
+      return `${data.hydraFunction}(${paramsStr})`;
+    } else if (data.functionDef.type === 'combine' || data.functionDef.type === 'combineCoord') {
+      return `.${data.hydraFunction}(texture${paramsStr ? ', ' + paramsStr : ''})`;
+    }
+    return `.${data.hydraFunction}(${paramsStr})`;
+  };
+
+  const getCurrentSnippet = () => {
+    if (isOutput) {
+      const bufferIndex = data.params.buffer ?? 0;
+      return `.out(o${bufferIndex})`;
+    }
+    const paramsStr = data.functionDef.params.map((p: HydraParamDef) => {
+      const val = data.params[p.name] ?? p.default;
+      return typeof val === 'number' ? val.toFixed(2).replace(/\.00$/, '') : String(val);
+    }).join(', ');
+    
+    if (data.functionDef.type === 'src') {
+      return `${data.hydraFunction}(${paramsStr})`;
+    } else if (data.functionDef.type === 'combine' || data.functionDef.type === 'combineCoord') {
+      return `.${data.hydraFunction}(/* texture */${paramsStr ? ', ' + paramsStr : ''})`;
+    }
+    return `.${data.hydraFunction}(${paramsStr})`;
+  };
+
+  const getExampleUsage = () => {
+    if (data.functionDef.exampleUsage && data.functionDef.exampleUsage.length > 0) {
+      return data.functionDef.exampleUsage[0];
+    }
+    // Generate systematic dummy example
+    const defaults = data.functionDef.params.map((p: HydraParamDef) => p.default).join(', ');
+    if (data.functionDef.type === 'src') {
+      return `${data.hydraFunction}(${defaults})\n  .out()`;
+    } else if (data.functionDef.type === 'combine' || data.functionDef.type === 'combineCoord') {
+      return `osc().${data.hydraFunction}(noise()${defaults ? ', ' + defaults : ''})\n  .out()`;
+    }
+    return `osc().${data.hydraFunction}(${defaults})\n  .out()`;
+  };
+
   return (
     <aside className="inspector">
       <div className="inspector__header" style={{ '--accent': meta?.color || '#6366f1' } as React.CSSProperties}>
@@ -63,6 +110,21 @@ export default function Inspector() {
             onChange={(e) => setNodeAlias(selectedNode.id, e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="inspector__params inspector__pedagogy">
+        <h4 className="inspector__section-title">Base Signature</h4>
+        <pre className="inspector__snippet-block">{getCanonicalSignature()}</pre>
+        
+        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Current Snippet</h4>
+        <pre className="inspector__snippet-block inspector__snippet-block--current">{getCurrentSnippet()}</pre>
+        
+        <h4 className="inspector__section-title" style={{ marginTop: '12px' }}>Example Usage</h4>
+        <pre className="inspector__snippet-block inspector__snippet-block--example">{getExampleUsage()}</pre>
+        
+        <p className="inspector__hint" style={{ marginTop: '8px' }}>
+          Hydra parameters accept dynamic inputs such as: <code>10</code>, <code>[10, 20]</code>, <code>() =&gt; time</code>, <code>() =&gt; mouse.x</code>, <code>() =&gt; a.fft[0]</code>
+        </p>
       </div>
 
       {!isOutput && data.functionDef.params.length > 0 && (

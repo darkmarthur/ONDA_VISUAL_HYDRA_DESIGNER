@@ -16,8 +16,8 @@ import Toolbar from './panels/Toolbar';
 import TabMenu from './panels/TabMenu';
 
 export default function HydraEditor() {
-  const [showCode, setShowCode] = useState(true);
   const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string }>({ open: false });
+  const editorMode = useGraphStore((s) => s.editorMode);
 
   useEffect(() => {
     const undo = useGraphStore.temporal.getState().undo;
@@ -68,9 +68,14 @@ export default function HydraEditor() {
         {/* Left panel — Node library */}
         <NodeLibrary />
 
-        {/* Center — Canvas */}
+        {/* Center — Canvas or Code */}
         <div className="editor__center">
-          <HydraCanvas />
+          <div style={{ display: editorMode === 'visual' ? 'flex' : 'none', flex: 1, width: '100%', height: '100%' }}>
+            <HydraCanvas />
+          </div>
+          {editorMode === 'code' && (
+            <CodePanel />
+          )}
         </div>
 
         {/* Right panel — Inspector + Preview + Code */}
@@ -80,16 +85,6 @@ export default function HydraEditor() {
           </div>
 
           <Inspector />
-
-          <div className="editor__code-toggle">
-            <button
-              className={`editor__toggle-btn ${showCode ? 'editor__toggle-btn--active' : ''}`}
-              onClick={() => setShowCode(!showCode)}
-            >
-              {showCode ? '▾ Code' : '▸ Code'}
-            </button>
-          </div>
-          {showCode && <CodePanel />}
         </div>
       </div>
 

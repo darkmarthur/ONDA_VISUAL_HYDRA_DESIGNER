@@ -42,6 +42,7 @@ export interface HydraFunctionDef {
   category: HydraCategory;
   params: HydraParamDef[];
   description?: string;
+  exampleUsage?: string[];
 }
 
 // ─── Node types for the visual editor ────────────────────────────────────────

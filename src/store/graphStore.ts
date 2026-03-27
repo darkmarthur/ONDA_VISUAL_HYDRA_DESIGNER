@@ -31,6 +31,7 @@ interface GraphState {
   selectedNodeId: string | null;
   generatedCode: string;
   hydraError: string | null;
+  editorMode: 'visual' | 'code';
 
   // ─── Actions ─────────────────────────────────────────────────────────────
   onNodesChange: (changes: NodeChange<Node<HydraNodeData>>[]) => void;
@@ -47,6 +48,7 @@ interface GraphState {
   setHydraError: (error: string | null) => void;
   regenerateCode: () => void;
   updateGraphFromCode: (newCode: string) => void;
+  setEditorMode: (mode: 'visual' | 'code') => void;
   clearGraph: () => void;
   serializeGraph: () => string;
   deserializeGraph: (json: string) => void;
@@ -74,6 +76,7 @@ export const useGraphStore = create<GraphState>()(
   selectedNodeId: null,
   generatedCode: '// Add nodes and connect them to generate Hydra code',
   hydraError: null,
+  editorMode: 'visual',
 
   onNodesChange: (changes) => {
     set((state) => ({
@@ -387,6 +390,10 @@ export const useGraphStore = create<GraphState>()(
       localStorage.setItem('hydra-live-code', newCode);
       window.dispatchEvent(new Event('storage'));
     } catch {}
+  },
+
+  setEditorMode: (mode) => {
+    set({ editorMode: mode });
   },
 
   clearGraph: () => {
