@@ -10,6 +10,7 @@ import { useGraphStore } from '@/store/graphStore';
 
 export default function CodePanel() {
   const generatedCode = useGraphStore((s) => s.generatedCode);
+  const updateGraphFromCode = useGraphStore((s) => s.updateGraphFromCode);
   const hydraError = useGraphStore((s) => s.hydraError);
   const [copied, setCopied] = useState(false);
 
@@ -43,9 +44,13 @@ export default function CodePanel() {
           {copied ? '✓ Copied' : '⎘ Copy'}
         </button>
       </div>
-      <pre className="code-panel__code">
-        <code>{generatedCode}</code>
-      </pre>
+      <textarea
+        className="code-panel__code"
+        value={generatedCode}
+        onChange={(e) => updateGraphFromCode(e.target.value)}
+        spellCheck={false}
+        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit', resize: 'vertical' }}
+      />
       {hydraError && (
         <div className="code-panel__error">
           <span className="code-panel__error-icon">⚠</span>

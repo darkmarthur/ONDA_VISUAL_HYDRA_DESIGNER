@@ -6,7 +6,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
 import { HydraNodeData } from '@/hydra/types';
 import { useGraphStore } from '@/store/graphStore';
 
@@ -15,9 +15,12 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
   const updateOutputBuffer = useGraphStore((s) => s.updateOutputBuffer);
   const bufferIndex = data.params.buffer ?? 0;
 
+  const inConnections = useHandleConnections({ type: 'target', id: 'output-in' });
+  const hasError = inConnections.length === 0;
+
   return (
     <div
-      className={`hydra-node hydra-node--output ${selected ? 'hydra-node--selected' : ''}`}
+      className={`hydra-node hydra-node--output ${selected ? 'hydra-node--selected' : ''} ${hasError ? 'hydra-node--error' : ''}`}
       onClick={() => setSelectedNode(id)}
       style={{ '--node-accent': '#ef4444' } as React.CSSProperties}
     >
@@ -29,8 +32,15 @@ function OutputNode({ id, data, selected }: NodeProps & { data: HydraNodeData })
       />
 
       <div className="hydra-node__header">
-        <span className="hydra-node__icon">▶</span>
+        <span className="hydra-node__icon">▹</span>
         <span className="hydra-node__label">out</span>
+        {hasError && (
+          <span className="hydra-node__error-icon" title="Missing required connection">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent-red)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+            </svg>
+          </span>
+        )}
       </div>
 
       <div className="hydra-node__output-selector">

@@ -1,8 +1,3 @@
-/**
- * Toolbar Component
- * Top bar with save/load, clear, and patch management.
- */
-
 'use client';
 
 import React, { useState } from 'react';
@@ -13,10 +8,16 @@ export default function Toolbar() {
   const savePatch = useGraphStore((s) => s.savePatch);
   const loadPatch = useGraphStore((s) => s.loadPatch);
   const getSavedPatches = useGraphStore((s) => s.getSavedPatches);
+  const serializeGraph = useGraphStore((s) => s.serializeGraph);
+  const deserializeGraph = useGraphStore((s) => s.deserializeGraph);
+  const updateGraphFromCode = useGraphStore((s) => s.updateGraphFromCode);
 
   const [showSave, setShowSave] = useState(false);
-  const [showLoad, setShowLoad] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [patchName, setPatchName] = useState('');
+
+  const savedPatches = getSavedPatches();
+  const lastPatch = savedPatches.length > 0 ? savedPatches[savedPatches.length - 1] : null;
 
   const handleSave = () => {
     if (patchName.trim()) {
@@ -26,7 +27,49 @@ export default function Toolbar() {
     }
   };
 
-  const savedPatches = getSavedPatches();
+  const handleExportJS = () => {
+    const json = serializeGraph();
+    const code = useGraphStore.getState().generatedCode;
+    const fileContent = `// ONDA VISUAL HYDRA DESIGNER PATCH\n// ==BEGIN_GRAPH==\n// ${json}\n// ==END_GRAPH==\n\n${code}`;
+    
+    const blob = new Blob([fileContent], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hydra-patch-${Date.now()}.js`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowMenu(false);
+  };
+
+  const handleImportJS = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.js';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const graphMatch = text.match(/\/\/ ==BEGIN_GRAPH==\s*\/\/\s*(.*?)\s*\/\/ ==END_GRAPH==/s);
+        if (graphMatch && graphMatch[1]) {
+          deserializeGraph(graphMatch[1]);
+        } else {
+          // If no JSON block, try code sync
+          updateGraphFromCode(text);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+    setShowMenu(false);
+  };
+
+  const launchLiveWindow = () => {
+    window.open('/live', 'HydraLive', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+    setShowMenu(false);
+  };
 
   return (
     <header className="toolbar">
@@ -37,11 +80,26 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar__actions">
+        {/* Quick Launch Live Popup */}
+        <button className="toolbar__btn" onClick={launchLiveWindow} style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
+          ◱ Live Window
+        </button>
+
+        {/* Quick Load Last */}
+        <button 
+          className="toolbar__btn" 
+          onClick={() => lastPatch && loadPatch(lastPatch)}
+          disabled={!lastPatch}
+          style={{ opacity: lastPatch ? 1 : 0.5 }}
+        >
+          ⟲ Load Last
+        </button>
+
         {/* Save */}
         <div className="toolbar__action-group">
           <button
             className="toolbar__btn"
-            onClick={() => { setShowSave(!showSave); setShowLoad(false); }}
+            onClick={() => { setShowSave(!showSave); setShowMenu(false); }}
           >
             💾 Save
           </button>
@@ -63,32 +121,50 @@ export default function Toolbar() {
           )}
         </div>
 
-        {/* Load */}
+        {/* Hamburger Menu (Projects / Import / Export) */}
         <div className="toolbar__action-group">
           <button
             className="toolbar__btn"
-            onClick={() => { setShowLoad(!showLoad); setShowSave(false); }}
+            onClick={() => { setShowMenu(!showMenu); setShowSave(false); }}
           >
-            📂 Load
+            ☰ Menu
           </button>
-          {showLoad && (
-            <div className="toolbar__dropdown">
-              {savedPatches.length === 0 ? (
-                <p className="toolbar__dropdown-empty">No saved patches</p>
-              ) : (
-                savedPatches.map((name) => (
-                  <button
-                    key={name}
-                    className="toolbar__dropdown-item"
-                    onClick={() => {
-                      loadPatch(name);
-                      setShowLoad(false);
-                    }}
-                  >
-                    {name}
-                  </button>
-                ))
-              )}
+          {showMenu && (
+            <div className="toolbar__dropdown" style={{ width: '240px' }}>
+              <div style={{ padding: '4px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                Actions
+              </div>
+              <button className="toolbar__dropdown-item" onClick={handleExportJS}>
+                ↳ Export Patch (.js)
+              </button>
+              <button className="toolbar__dropdown-item" onClick={handleImportJS}>
+                ↱ Import Patch (.js)
+              </button>
+              
+              <div style={{ margin: '8px 0', borderTop: '1px solid var(--border-subtle)' }}></div>
+              
+              <div style={{ padding: '4px 8px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                Projects Folder
+              </div>
+              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {savedPatches.length === 0 ? (
+                  <p className="toolbar__dropdown-empty">No saved projects</p>
+                ) : (
+                  savedPatches.map((name) => (
+                    <button
+                      key={name}
+                      className="toolbar__dropdown-item"
+                      style={{ paddingLeft: '16px' }}
+                      onClick={() => {
+                        loadPatch(name);
+                        setShowMenu(false);
+                      }}
+                    >
+                      📁 {name}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>

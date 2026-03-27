@@ -5,7 +5,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useGraphStore } from '@/store/graphStore';
 import HydraCanvas from './canvas/HydraCanvas';
 import NodeLibrary from './panels/NodeLibrary';
 import Inspector from './panels/Inspector';
@@ -15,6 +16,25 @@ import Toolbar from './panels/Toolbar';
 
 export default function HydraEditor() {
   const [showCode, setShowCode] = useState(true);
+
+  useEffect(() => {
+    const undo = useGraphStore.temporal.getState().undo;
+    const redo = useGraphStore.temporal.getState().redo;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="editor">

@@ -6,7 +6,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, useHandleConnections } from '@xyflow/react';
 import { HydraNodeData } from '@/hydra/types';
 import { categoryMeta } from '@/hydra/registry';
 import { useGraphStore } from '@/store/graphStore';
@@ -16,9 +16,16 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
   const meta = categoryMeta[data.functionDef.category];
   const isCombine = data.functionDef.type === 'combine' || data.functionDef.type === 'combineCoord';
 
+  const mainConnections = useHandleConnections({ type: 'target', id: 'texture-in' });
+  const secConnections = useHandleConnections({ type: 'target', id: 'texture-secondary' });
+  
+  const hasMain = mainConnections.length > 0;
+  const hasSec = isCombine ? secConnections.length > 0 : true;
+  const hasError = !hasMain || !hasSec;
+
   return (
     <div
-      className={`hydra-node hydra-node--transform ${selected ? 'hydra-node--selected' : ''}`}
+      className={`hydra-node hydra-node--transform ${selected ? 'hydra-node--selected' : ''} ${hasError ? 'hydra-node--error' : ''}`}
       onClick={() => setSelectedNode(id)}
       style={{ '--node-accent': meta?.color || '#60a5fa' } as React.CSSProperties}
     >
@@ -45,6 +52,13 @@ function TransformNode({ id, data, selected }: NodeProps & { data: HydraNodeData
       <div className="hydra-node__header">
         <span className="hydra-node__icon">{meta?.icon || '⬡'}</span>
         <span className="hydra-node__label">{data.label}</span>
+        {hasError && (
+          <span className="hydra-node__error-icon" title="Missing required connection">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent-red)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+            </svg>
+          </span>
+        )}
         <span className="hydra-node__category">{meta?.label}</span>
       </div>
 

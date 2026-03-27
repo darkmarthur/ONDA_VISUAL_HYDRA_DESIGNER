@@ -15,6 +15,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   NodeTypes,
+  Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -41,6 +42,9 @@ function HydraCanvasInner() {
   const onConnect = useGraphStore((s) => s.onConnect);
   const addNode = useGraphStore((s) => s.addNode);
   const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
+  const removeEdge = useGraphStore((s) => s.removeEdge);
+
+  const [edgeMenu, setEdgeMenu] = React.useState<{ id: string; x: number; y: number } | null>(null);
 
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -77,7 +81,24 @@ function HydraCanvasInner() {
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
+    setEdgeMenu(null);
   }, [setSelectedNode]);
+
+  const onEdgeDoubleClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setEdgeMenu({ id: edge.id, x: event.clientX, y: event.clientY });
+    },
+    [],
+  );
+
+  const handleDeleteEdge = useCallback(() => {
+    if (edgeMenu) {
+      removeEdge(edgeMenu.id);
+      setEdgeMenu(null);
+    }
+  }, [edgeMenu, removeEdge]);
 
   const defaultEdgeOptions = useMemo(
     () => ({
@@ -100,6 +121,7 @@ function HydraCanvasInner() {
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onEdgeDoubleClick={onEdgeDoubleClick}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
@@ -134,6 +156,34 @@ function HydraCanvasInner() {
           maskColor="rgba(0,0,0,0.7)"
           className="hydra-minimap"
         />
+        {edgeMenu && (
+          <div
+            style={{
+              position: 'fixed',
+              left: edgeMenu.x,
+              top: edgeMenu.y,
+              zIndex: 1000,
+            }}
+            className="toolbar__dropdown"
+          >
+            <button
+              className="toolbar__dropdown-item"
+              style={{ color: 'var(--accent-red)' }}
+              onClick={handleDeleteEdge}
+            >
+              Delete Connection
+            </button>
+            <button
+              className="toolbar__dropdown-item"
+              onClick={() => {
+                alert('Insert node feature coming soon!');
+                setEdgeMenu(null);
+              }}
+            >
+              Insert Node...
+            </button>
+          </div>
+        )}
       </ReactFlow>
     </div>
   );

@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import { temporal } from 'zundo';
 import {
   Node,
   Edge,
@@ -38,10 +39,12 @@ interface GraphState {
   addNode: (hydraFunctionName: string, position: { x: number; y: number }) => void;
   removeNode: (nodeId: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
+  removeEdge: (edgeId: string) => void;
   updateNodeParam: (nodeId: string, paramName: string, value: number) => void;
   updateOutputBuffer: (nodeId: string, buffer: number) => void;
   setHydraError: (error: string | null) => void;
   regenerateCode: () => void;
+  updateGraphFromCode: (newCode: string) => void;
   clearGraph: () => void;
   serializeGraph: () => string;
   deserializeGraph: (json: string) => void;
@@ -61,7 +64,9 @@ function determineNodeType(hydraType: string): HydraNodeType {
   return 'transform';
 }
 
-export const useGraphStore = create<GraphState>((set, get) => ({
+export const useGraphStore = create<GraphState>()(
+  temporal(
+    (set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
@@ -104,7 +109,24 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         !(e.target === connection.target && e.targetHandle === connection.targetHandle)
     );
 
-    set({ edges: addEdge(connection, newEdges) });
+    // Get source node color for the edge
+    const sourceNode = nodes.find(n => n.id === connection.source);
+    let edgeColor = '#6366f1'; // default accent-primary
+    if (sourceNode) {
+      const category = sourceNode.data.functionDef.category;
+      const meta = require('@/hydra/registry').categoryMeta[category];
+      if (meta) {
+        edgeColor = meta.color;
+      }
+    }
+
+    const newConnection = {
+      ...connection,
+      animated: true,
+      style: { stroke: edgeColor, strokeWidth: 2 },
+    };
+
+    set({ edges: addEdge(newConnection, newEdges) });
     get().regenerateCode();
   },
 
@@ -141,6 +163,13 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       nodes: state.nodes.filter((n) => n.id !== nodeId),
       edges: state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
       selectedNodeId: state.selectedNodeId === nodeId ? null : state.selectedNodeId,
+    }));
+    get().regenerateCode();
+  },
+
+  removeEdge: (edgeId) => {
+    set((state) => ({
+      edges: state.edges.filter((e) => e.id !== edgeId),
     }));
     get().regenerateCode();
   },
@@ -191,6 +220,50 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     const { nodes, edges } = get();
     const code = generateHydraCode(nodes, edges);
     set({ generatedCode: code });
+    // Write to localStorage for the external live view window
+    try {
+      localStorage.setItem('hydra-live-code', code);
+      // Dispatch storage event manually for same-window popups
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
+  },
+
+  updateGraphFromCode: (newCode) => {
+    // Sync parameter changes back to the graph from raw code editing
+    const nodes = get().nodes;
+    let updatedNodes = [...nodes];
+    const regex = /(\w+)\s*\(([^)]*)\)/g;
+    let match;
+    
+    while ((match = regex.exec(newCode)) !== null) {
+      const funcName = match[1];
+      const argsStr = match[2];
+      const args = argsStr.split(',').map(s => parseFloat(s.trim()));
+      
+      const nodeIndex = updatedNodes.findIndex(n => n.data.hydraFunction === funcName);
+      if (nodeIndex >= 0) {
+        const node = updatedNodes[nodeIndex];
+        const newParams = { ...node.data.params };
+        
+        node.data.functionDef.params.forEach((paramDef, i) => {
+          if (args[i] !== undefined && !isNaN(args[i])) {
+            newParams[paramDef.name] = args[i];
+          }
+        });
+        
+        updatedNodes[nodeIndex] = {
+          ...node,
+          data: { ...node.data, params: newParams }
+        };
+      }
+    }
+    
+    set({ nodes: updatedNodes, generatedCode: newCode });
+    // Write to localStorage for the external live view window
+    try {
+      localStorage.setItem('hydra-live-code', newCode);
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
   },
 
   clearGraph: () => {
@@ -295,7 +368,16 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       return [];
     }
   },
-}));
+}),
+  {
+    partialize: (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      generatedCode: state.generatedCode,
+      selectedNodeId: state.selectedNodeId
+    }),
+  }
+));
 
 // ─── Output node factory ─────────────────────────────────────────────────────
 export function addOutputNode(
