@@ -11,7 +11,7 @@
  */
 
 // ─── Hydra internal function type ────────────────────────────────────────────
-export type HydraFunctionType = 'src' | 'coord' | 'color' | 'combine' | 'combineCoord';
+export type HydraFunctionType = 'src' | 'coord' | 'color' | 'combine' | 'combineCoord' | 'util' | 'ext';
 
 // ─── UI category for the node library panel ──────────────────────────────────
 export type HydraCategory =
@@ -22,7 +22,9 @@ export type HydraCategory =
   | 'modulate'
   | 'externalSource'
   | 'output'
-  | 'settings';
+  | 'settings'
+  | 'array'
+  | 'audio';
 
 // ─── Parameter definition ────────────────────────────────────────────────────
 export interface HydraParamDef {

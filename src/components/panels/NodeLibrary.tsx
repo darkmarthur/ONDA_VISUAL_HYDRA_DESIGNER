@@ -17,7 +17,11 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
-  Grid
+  Grid,
+  Video,
+  Sliders,
+  Braces,
+  Music
 } from 'lucide-react';
 import { hydraFunctionRegistry, categoryMeta } from '@/hydra/registry';
 import { HydraCategory } from '@/hydra/types';
@@ -31,6 +35,10 @@ const CategoryIcon = ({ category, size = 14 }: { category: string; size?: number
     case 'blend': return <Layers size={size} />;
     case 'modulate': return <Activity size={size} />;
     case 'output': return <Monitor size={size} />;
+    case 'externalSource': return <Video size={size} />;
+    case 'settings': return <Sliders size={size} />;
+    case 'array': return <Braces size={size} />;
+    case 'audio': return <Music size={size} />;
     default: return <Grid size={size} />;
   }
 };
@@ -41,6 +49,10 @@ const categories: { key: HydraCategory; label: string }[] = [
   { key: 'color', label: 'Color' },
   { key: 'blend', label: 'Blend' },
   { key: 'modulate', label: 'Modulate' },
+  { key: 'externalSource', label: 'External' },
+  { key: 'settings', label: 'Settings' },
+  { key: 'array', label: 'Array' },
+  { key: 'audio', label: 'Audio' },
 ];
 
 export default function NodeLibrary() {

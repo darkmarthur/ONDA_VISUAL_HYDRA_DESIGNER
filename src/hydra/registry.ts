@@ -539,6 +539,141 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
       { name: 'buffer', type: 'int', default: 0, min: 0, max: 3, step: 1 },
     ],
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  EXTERNAL SOURCES (type: 'ext')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'initCam',
+    type: 'ext',
+    category: 'externalSource',
+    description: 'Initialize webcam input',
+    params: [
+      { name: 'index', type: 'float', default: 0, min: 0, max: 5, step: 1 },
+    ],
+  },
+  {
+    name: 'initImage',
+    type: 'ext',
+    category: 'externalSource',
+    description: 'Initialize image input from URL',
+    params: [],
+  },
+  {
+    name: 'initVideo',
+    type: 'ext',
+    category: 'externalSource',
+    description: 'Initialize video input from URL',
+    params: [],
+  },
+  {
+    name: 'initScreen',
+    type: 'ext',
+    category: 'externalSource',
+    description: 'Initialize screen capture input',
+    params: [],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  SYNTH SETTINGS (type: 'util')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'speed',
+    type: 'util',
+    category: 'settings',
+    description: 'Global playback speed',
+    params: [
+      { name: 'amount', type: 'float', default: 1, min: 0, max: 5, step: 0.1 },
+    ],
+  },
+  {
+    name: 'bpm',
+    type: 'util',
+    category: 'settings',
+    description: 'Set global BPM',
+    params: [
+      { name: 'amount', type: 'float', default: 60, min: 20, max: 300, step: 1 },
+    ],
+  },
+  {
+    name: 'render',
+    type: 'util',
+    category: 'settings',
+    description: 'Force re-render / layout',
+    params: [],
+  },
+  {
+    name: 'hush',
+    type: 'util',
+    category: 'settings',
+    description: 'Reset all (black out)',
+    params: [],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  ARRAY OPERATORS (type: 'util')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'fast',
+    type: 'util',
+    category: 'array',
+    description: 'Speed up array sequence',
+    params: [
+      { name: 'amount', type: 'float', default: 1, min: 0, max: 10, step: 0.1 },
+    ],
+  },
+  {
+    name: 'smooth',
+    type: 'util',
+    category: 'array',
+    description: 'Interpolate array sequence',
+    params: [
+      { name: 'amount', type: 'float', default: 1, min: 0, max: 10, step: 0.1 },
+    ],
+  },
+  {
+    name: 'ease',
+    type: 'util',
+    category: 'array',
+    description: 'Easing function for sequence',
+    params: [],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  AUDIO (type: 'util')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'fft',
+    type: 'util',
+    category: 'audio',
+    description: 'Audio FFT signal',
+    params: [
+      { name: 'bin', type: 'int', default: 0, min: 0, max: 4, step: 1 },
+    ],
+  },
+  {
+    name: 'setSmooth',
+    type: 'util',
+    category: 'audio',
+    description: 'Audio smoothing',
+    params: [
+      { name: 'amount', type: 'float', default: 0.4, min: 0, max: 1, step: 0.01 },
+    ],
+  },
+  {
+    name: 'hide',
+    type: 'util',
+    category: 'audio',
+    description: 'Hide FFT visualizer',
+    params: [],
+  },
+  {
+    name: 'show',
+    type: 'util',
+    category: 'audio',
+    description: 'Show FFT visualizer',
+    params: [],
+  },
 ];
 
 // ─── Lookup helpers ──────────────────────────────────────────────────────────
@@ -568,4 +703,6 @@ export const categoryMeta: Record<string, { label: string; color: string }> = {
   externalSource: { label: 'External',  color: '#f97316' },
   output:         { label: 'Output',    color: '#ef4444' },
   settings:       { label: 'Settings',  color: '#94a3b8' },
+  array:          { label: 'Array',     color: '#d946ef' },
+  audio:          { label: 'Audio',     color: '#2dd4bf' },
 };
