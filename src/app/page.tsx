@@ -22,7 +22,7 @@ const HydraEditor=dynamic(() => import('../components/HydraEditor'), {
     >
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontStyle: 'normal', fontSize: '24px', marginBottom: '12px', opacity: 0.8 }}>◌</div>
-        <div style={{ opacity: 0.5 }}>ONDA｜HYDRA</div>
+        <div style={{ opacity: 0.5 }}>HYDRA｜DESIGNER</div>
       </div>
     </div>
   ),

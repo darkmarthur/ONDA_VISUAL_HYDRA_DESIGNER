@@ -21,7 +21,7 @@ export default function MobileWarning() {
         <h2 className="mobile-warning__title">Desktop Experience Required</h2>
         
         <p className="mobile-warning__text">
-          The <strong>ONDA｜HYDRA DESIGNER</strong> v2.0 is a high-performance visual tool 
+          The <strong>HYDRA｜DESIGNER</strong> BETA V0.01 is a high-performance visual tool 
           optimized for large resolutions and precise pointer interaction.
         </p>
         
@@ -31,7 +31,7 @@ export default function MobileWarning() {
         </p>
 
         <div className="mobile-warning__brand">
-          ONDA｜HYDRA v2.0
+          HYDRA｜DESIGNER BETA V0.01
         </div>
       </div>
     </div>

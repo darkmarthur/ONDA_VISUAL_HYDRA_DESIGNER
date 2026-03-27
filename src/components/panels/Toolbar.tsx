@@ -105,8 +105,8 @@ export default function Toolbar() {
     <header className="toolbar">
       <div className="toolbar__brand">
         <div className="toolbar__brand-group">
-          <h1 className="toolbar__title">ONDA｜HYDRA</h1>
-          <span className="toolbar__subtitle">Professional v2.0</span>
+          <h1 className="toolbar__title">HYDRA｜DESIGNER</h1>
+          <span className="toolbar__subtitle">BETA V0.01</span>
         </div>
       </div>
 
