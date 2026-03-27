@@ -2209,3 +2209,190 @@ html, body {
   transform: translateY(-50%) scale(1.3) !important;
   box-shadow: 0 0 12px rgba(234, 179, 8, 0.7) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABS BAR (Workspace Selector)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tabs-bar {
+  background: #000000 !important;
+  height: 38px !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  width: 100% !important;
+  user-select: none !important;
+  z-index: 200 !important;
+  overflow: hidden !important;
+  padding: 0 4px !important;
+}
+
+.tabs-bar__container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  height: 100% !important;
+  gap: 2px !important;
+  overflow-x: auto !important;
+  flex: 1 !important;
+}
+
+.tabs-bar__container::-webkit-scrollbar {
+  display: none !important;
+}
+
+.tabs-bar__tab {
+  height: 32px !important;
+  min-width: 140px !important;
+  max-width: 240px !important;
+  padding: 0 12px 0 16px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #0a0a0a !important;
+  border-radius: 6px 6px 0 0 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.1s ease !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
+  border: 1px solid transparent !important;
+  border-bottom: none !important;
+}
+
+.tabs-bar__tab:hover {
+  background: #151515 !important;
+}
+
+.tabs-bar__tab--active {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-bottom: 1px solid var(--bg-primary) !important;
+  height: 34px !important;
+  z-index: 2 !important;
+}
+
+.tabs-bar__tab--active::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.tabs-bar__tab-content {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+.tabs-bar__name {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--text-secondary) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  letter-spacing: 0.02em;
+}
+
+.tabs-bar__tab--active .tabs-bar__name {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.tabs-bar__input {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  width: 100% !important;
+  outline: none !important;
+}
+
+.tabs-bar__actions {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.tabs-bar__live-dot {
+  width: 6px !important;
+  height: 6px !important;
+  background: #ff4444 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.5) !important;
+  animation: pulse-live-tabs 1.5s infinite !important;
+  flex-shrink: 0 !important;
+}
+
+.tabs-bar__close-btn {
+  opacity: 0;
+  color: #666 !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.tabs-bar__tab:hover .tabs-bar__close-btn {
+  opacity: 1 !important;
+}
+
+.tabs-bar__close-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.tabs-bar__live-btn {
+  background: rgba(234, 179, 8, 0.1) !important;
+  border: 1px solid rgba(234, 179, 8, 0.3) !important;
+  color: #eab308 !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  height: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+.tabs-bar__add-btn {
+  width: 38px !important;
+  height: 38px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #666 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.1s ease !important;
+}
+
+.tabs-bar__add-btn:hover {
+  color: white !important;
+  background: #111 !important;
+}
+
+@keyframes pulse-live-tabs {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
