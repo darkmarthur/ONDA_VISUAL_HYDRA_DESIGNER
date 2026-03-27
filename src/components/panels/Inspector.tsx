@@ -39,6 +39,7 @@ export default function Inspector() {
   const nodes = useGraphStore((s) => s.nodes);
   const selectedNodeId = useGraphStore((s) => s.selectedNodeId);
   const updateNodeParam = useGraphStore((s) => s.updateNodeParam);
+  const updateNodeBinding = useGraphStore((s) => s.updateNodeBinding);
   const removeNode = useGraphStore((s) => s.removeNode);
   const setNodeAlias = useGraphStore((s) => s.setNodeAlias);
 
@@ -146,48 +147,63 @@ export default function Inspector() {
           <h4 className="inspector__section-title">Parameters</h4>
           {data.functionDef.params.map((paramDef: HydraParamDef) => {
             const value = data.params[paramDef.name] ?? paramDef.default;
+            const binding = data.bindings?.[paramDef.name];
+            const isBound = binding && binding.mode !== 'literal';
+
             return (
-              <div key={paramDef.name} className="inspector__param">
+              <div key={paramDef.name} className={`inspector__param ${isBound ? 'inspector__param--bound' : ''}`}>
                 <div className="inspector__param-header">
                   <label className="inspector__param-label">{paramDef.name}</label>
+                  {isBound ? (
+                    <div className="inspector__binding-summary">
+                      <span className="inspector__binding-badge">SIGNAL</span>
+                      <button 
+                        className="inspector__param-reset"
+                        onClick={() => {
+                          const state = useGraphStore.getState();
+                          useGraphStore.setState((s) => ({
+                            nodes: s.nodes.map(n => n.id === selectedNode.id ? {
+                              ...n, data: { ...n.data, bindings: { ...n.data.bindings, [paramDef.name]: { mode: 'literal' } } }
+                            } : n)
+                          }));
+                          state.regenerateCode();
+                        }}
+                      >
+                        <RotateCcw size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      className="inspector__param-number"
+                      value={value}
+                      step={paramDef.step || 0.01}
+                      onChange={(e) => updateNodeParam(selectedNode.id, paramDef.name, parseFloat(e.target.value) || 0)}
+                    />
+                  )}
+                </div>
+                
+                {isBound ? (
+                  <div className="inspector__binding-details">
+                    <input
+                      className="inspector__param-input inspector__param-input--binding"
+                      value={binding.expression || ''}
+                      onChange={(e) => updateNodeBinding(selectedNode.id, paramDef.name, { expression: e.target.value })}
+                      placeholder="e.g. time * 0.5"
+                      spellCheck={false}
+                    />
+                  </div>
+                ) : (
                   <input
-                    type="number"
-                    className="inspector__param-number"
-                    value={value}
+                    type="range"
+                    className="inspector__param-slider"
+                    min={paramDef.min ?? 0}
+                    max={paramDef.max ?? 10}
                     step={paramDef.step || 0.01}
-                    min={paramDef.min}
-                    max={paramDef.max}
-                    onChange={(e) =>
-                      updateNodeParam(
-                        selectedNode.id,
-                        paramDef.name,
-                        parseFloat(e.target.value) || 0,
-                      )
-                    }
+                    value={value as number}
+                    onChange={(e) => updateNodeParam(selectedNode.id, paramDef.name, parseFloat(e.target.value) || 0)}
                   />
-                </div>
-                <input
-                  type="range"
-                  className="inspector__param-slider"
-                  value={value}
-                  step={paramDef.step || 0.01}
-                  min={paramDef.min ?? 0}
-                  max={paramDef.max ?? 10}
-                  onChange={(e) =>
-                    updateNodeParam(
-                      selectedNode.id,
-                      paramDef.name,
-                      parseFloat(e.target.value),
-                    )
-                  }
-                />
-                <div className="inspector__param-range">
-                  <span>{paramDef.min ?? 0}</span>
-                  <span className="inspector__param-default">
-                    default: {paramDef.default}
-                  </span>
-                  <span>{paramDef.max ?? 10}</span>
-                </div>
+                )}
               </div>
             );
           })}

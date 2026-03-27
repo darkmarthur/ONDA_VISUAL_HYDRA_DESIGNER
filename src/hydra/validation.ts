@@ -41,10 +41,24 @@ export function isValidConnection(
   const sourceData = sourceNode.data;
   const targetData = targetNode.data;
 
-  // Source must have a texture output handle
+  // Handle Parameter Bindings
+  const isValueSource = sourceHandle === 'value-out';
+  const isParamTarget = targetHandle.startsWith('param-in:');
+
+  if (isValueSource) {
+    // Value nodes can ONLY connect to parameters
+    return isParamTarget;
+  }
+
+  if (isParamTarget) {
+    // Parameters can ONLY accept values
+    return isValueSource;
+  }
+
+  // Source must have a texture output handle for normal chains
   if (sourceHandle !== 'texture-out') return false;
 
-  // Target handle must be a valid input type
+  // Target handle must be a valid texture input type
   if (
     targetHandle !== 'texture-in' &&
     targetHandle !== 'texture-secondary' &&

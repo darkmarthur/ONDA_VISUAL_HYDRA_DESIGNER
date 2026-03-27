@@ -112,7 +112,8 @@ function buildNodeExpression(
   const alias = node.data.alias;
 
   // Build the parameter list for this function call
-  const paramStr = buildParamString(fnDef.params, params);
+  const paramsData = { values: node.data.params, bindings: node.data.bindings || {} };
+  const paramStr = buildParamString(fnDef.params, paramsData, nodes);
 
   const formatAlias = (prefix: string) => {
     if (!alias) return `\n${prefix}`;
@@ -183,37 +184,119 @@ function buildNodeExpression(
 
 /**
  * Build the parameter string for a function call.
- * Only includes parameters that differ from defaults, for cleaner output.
- * If all params are default, returns empty string (uses Hydra defaults).
  */
 function buildParamString(
-  paramDefs: { name: string; default: number }[],
-  paramValues: Record<string, number>,
+  paramDefs: any[],
+  nodeData: { values: Record<string, any>; bindings: Record<string, any> },
+  nodes: Node<HydraNodeData>[]
 ): string {
   if (paramDefs.length === 0) return '';
 
-  // Check if all values are at their defaults
-  const allDefaults = paramDefs.every(
-    (p) => (paramValues[p.name] ?? p.default) === p.default
-  );
+  const values = paramDefs.map((p) => {
+    const binding = nodeData.bindings[p.name];
+    if (binding && binding.mode !== 'literal') {
+       return getBoundParamValue(binding, nodes);
+    }
+    return formatValue(nodeData.values[p.name] ?? p.default);
+  });
+
+  // Check if all are defaults to keep code clean
+  const allDefaults = paramDefs.every((p, i) => {
+     const binding = nodeData.bindings[p.name];
+     if (binding && binding.mode !== 'literal') return false;
+     return (nodeData.values[p.name] ?? p.default) === p.default;
+  });
 
   if (allDefaults) return '';
 
-  // Build parameter values array, trimming trailing defaults
-  const values = paramDefs.map((p) => paramValues[p.name] ?? p.default);
-
   // Trim trailing defaults
-  let lastNonDefault = values.length - 1;
-  while (lastNonDefault >= 0 && values[lastNonDefault] === paramDefs[lastNonDefault].default) {
-    lastNonDefault--;
+  let lastRelevant = values.length - 1;
+  while (lastRelevant >= 0) {
+    const p = paramDefs[lastRelevant];
+    const binding = nodeData.bindings[p.name];
+    if (binding && binding.mode !== 'literal') break;
+    if ((nodeData.values[p.name] ?? p.default) !== p.default) break;
+    lastRelevant--;
   }
 
-  if (lastNonDefault < 0) return '';
+  if (lastRelevant < 0) return '';
+  return values.slice(0, lastRelevant + 1).join(', ');
+}
 
-  return values
-    .slice(0, lastNonDefault + 1)
-    .map((v) => formatNumber(v))
-    .join(', ');
+/**
+ * Resolves a binding to its Hydra code representation.
+ */
+function getBoundParamValue(binding: any, nodes: Node<HydraNodeData>[]): string {
+  // If we have a custom expression defined by the user, prioritize it
+  if (binding.expression) {
+    const expr = binding.expression;
+    // Don't double-wrap if it's already a lambda
+    if (expr.includes('=>') || expr.includes('function')) return expr;
+    return `() => ${expr}`;
+  }
+
+  if (binding.mode === 'array_sequence') return binding.expression || '[]';
+  
+  if (binding.mode === 'value_node' && binding.boundNodeId) {
+    const sourceNode = nodes.find(n => n.id === binding.boundNodeId);
+    if (!sourceNode) return '0';
+
+    const fn = sourceNode.data.hydraFunction;
+    const params = sourceNode.data.params;
+    const innerBindings = sourceNode.data.bindings || {};
+
+    // Use custom body from value producing nodes if it exists
+    if (params.body !== undefined) {
+       const body = params.body as string;
+       return body.includes('=>') ? body : `() => ${body}`;
+    }
+
+    if (fn === 'time') return '() => time';
+    if (fn === 'mouse.x') return '() => mouse.x';
+    if (fn === 'mouse.y') return '() => mouse.y';
+    if (fn === 'width') return '() => width';
+    if (fn === 'height') return '() => height';
+    
+    if (fn === 'fft') {
+      const bin = params.bin ?? 0;
+      return `() => a.fft[${bin}]`;
+    }
+
+    if (fn === 'sin' || fn === 'cos') {
+      const val = getInnerParamValue('value', params.value, innerBindings.value, nodes);
+      const mult = getInnerParamValue('mult', params.mult ?? 1, innerBindings.mult, nodes);
+      const offset = getInnerParamValue('offset', params.offset ?? 0, innerBindings.offset, nodes);
+      return `() => Math.${fn}(${val}) * ${mult} + ${offset}`;
+    }
+
+    if (fn === 'mod') {
+      const val = getInnerParamValue('value', params.value, innerBindings.value, nodes);
+      const div = getInnerParamValue('divisor', params.divisor ?? 1, innerBindings.divisor, nodes);
+      return `() => ${val} % ${div}`;
+    }
+
+    return '() => 0';
+  }
+
+  return '0';
+}
+
+function getInnerParamValue(name: string, literal: any, binding: any, nodes: Node<HydraNodeData>[]): string {
+  if (binding && binding.mode !== 'literal') {
+    const res = getBoundParamValue(binding, nodes);
+    return res.startsWith('() => ') ? res.substring(6) : res; // Extract inner expr
+  }
+  return formatValue(literal);
+}
+
+/**
+ * Format any value for Hydra code output.
+ */
+function formatValue(v: any): string {
+  if (typeof v === 'number') return formatNumber(v);
+  if (typeof v === 'string') return `"${v.replace(/"/g, '\\"')}"`;
+  if (Array.isArray(v)) return `[${v.map(formatValue).join(', ')}]`;
+  return String(v);
 }
 
 /**

@@ -715,6 +715,7 @@ html, body {
   flex-direction: column;
   gap: 8px;
   background-color: rgba(0, 0, 0, 0.2);
+  overflow: visible !important; /* Allow handles outside */
 }
 
 .hydra-node__params--combine {
@@ -727,6 +728,8 @@ html, body {
   align-items: center;
   gap: 8px;
   min-height: 20px;
+  position: relative; /* Anchor for handles */
+  overflow: visible !important;
 }
 
 .hydra-node__param-name {
@@ -744,9 +747,21 @@ html, body {
   font-size: 10px;
   width: 50px;
   text-align: right;
-  padding: 1px 4px;
+  padding: 4px 6px;
   outline: none;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
+  text-align: right;
+}
+
+.hydra-node__param-input--locked {
+  background: rgba(234, 179, 8, 0.1) !important;
+  color: #eab308 !important;
+  border: 1px dashed rgba(234, 179, 8, 0.3) !important;
+  cursor: not-allowed;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center !important;
+  font-size: 8.5px !important;
 }
 
 .hydra-node__param-input:hover {
@@ -941,6 +956,43 @@ html, body {
   border: 1px solid var(--border-default) !important;
   border-radius: 8px !important;
   box-shadow: var(--shadow-md) !important;
+}
+
+.hydra-node__lambda-container {
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.hydra-node__lambda-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.hydra-node__lambda-prefix {
+  color: var(--accent-amber);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hydra-node__lambda-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+  color: #fff;
+  padding: 2px 4px;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  min-width: 60px;
+}
+
+.hydra-node__lambda-input:focus {
+  border-bottom-color: var(--accent-amber);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1444,6 +1496,146 @@ html, body {
 @keyframes pulse-badge {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARAMETER BINDING & HANDLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.hydra-handle--param-in {
+  width: 10px !important;
+  height: 10px !important;
+  background: #eab308 !important; /* Yellow-500 */
+  border: 2px solid var(--bg-primary) !important;
+  left: -17px !important; /* Project outside node-params padding */
+  top: 50% !important;
+  transform: translateY(-50%);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 5px rgba(234, 179, 8, 0.3);
+  z-index: 100 !important;
+}
+
+.hydra-handle--param-in:hover {
+  width: 14px !important;
+  height: 14px !important;
+  left: -19px !important;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
+}
+
+.hydra-handle--value-out {
+  width: 10px !important;
+  height: 10px !important;
+  background: #eab308 !important;
+  border: 2px solid var(--bg-primary) !important;
+  right: -5px !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 5px rgba(234, 179, 8, 0.3);
+  z-index: 100 !important;
+}
+
+.hydra-handle--value-out:hover {
+  width: 14px !important;
+  height: 14px !important;
+  right: -7px !important;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
+}
+
+.hydra-node__param-preview--bound {
+  background: rgba(234, 179, 8, 0.05);
+  border-left: 2px solid #eab308;
+  padding-left: 6px;
+  opacity: 1;
+}
+
+.hydra-node__param-preview--bound .hydra-node__param-name {
+  color: #eab308;
+  font-weight: 600;
+}
+
+.hydra-node__param-preview--bound .hydra-node__param-input {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px dashed rgba(234, 179, 8, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Inspector Binding Styles */
+.inspector__param--bound {
+  background: rgba(234, 179, 8, 0.03);
+  border-left-color: #eab308 !important;
+}
+
+.inspector__binding-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  background: #eab308;
+  color: #000;
+  border-radius: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.inspector__binding-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspector__param-input--binding {
+  width: 100% !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px dashed rgba(234, 179, 8, 0.4) !important;
+  color: #eab308 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  margin-top: 4px;
+}
+
+.inspector__param-input--binding:focus {
+  border-style: solid !important;
+  border-color: #eab308 !important;
+  background: rgba(234, 179, 8, 0.05) !important;
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);
+}
+
+.hydra-node__param-input--binding {
+   text-overflow: ellipsis;
+   overflow: hidden;
+   white-space: nowrap;
+   cursor: text;
+}
+
+.inspector__param-reset {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inspector__param-reset:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* New Category Styles in Library */
+.node-library__category--value {
+   --cat-color: #eab308;
+}
+
+.node-library__category--math {
+   --cat-color: #f97316;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

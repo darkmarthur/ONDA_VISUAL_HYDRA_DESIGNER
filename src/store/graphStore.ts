@@ -17,7 +17,14 @@ import {
   NodeChange,
   EdgeChange,
 } from '@xyflow/react';
-import { HydraNodeData, HydraOutput, HydraNodeType } from '@/hydra/types';
+import { 
+  HydraNodeData, 
+  HydraNodeType, 
+  HydraOutput, 
+  HydraParamDef, 
+  SerializedPatch,
+  HydraParamBinding
+} from '@/hydra/types';
 import { getHydraFunction, categoryMeta } from '@/hydra/registry';
 import { isValidConnection } from '@/hydra/validation';
 import { generateHydraCode } from '@/hydra/codegen';
@@ -49,7 +56,8 @@ interface GraphState {
   setNodeAlias: (nodeId: string, alias: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
   removeEdge: (edgeId: string) => void;
-  updateNodeParam: (nodeId: string, paramName: string, value: number) => void;
+  updateNodeParam: (nodeId: string, paramName: string, value: number | string) => void;
+  updateNodeBinding: (nodeId: string, paramName: string, binding: Partial<HydraParamBinding>) => void;
   updateOutputBuffer: (nodeId: string, buffer: number) => void;
   setHydraError: (error: string | null) => void;
   regenerateCode: () => void;
@@ -80,6 +88,7 @@ function generateNodeId(): string {
 
 function determineNodeType(fnDef: { name: string; type: string; category: string }): HydraNodeType {
   if (fnDef.category === 'output' || fnDef.name === 'out') return 'output';
+  if (fnDef.category === 'value' || fnDef.category === 'math') return 'value';
   if (fnDef.type === 'src') return 'source';
   return 'transform';
 }
@@ -114,42 +123,98 @@ export const useGraphStore = create<GraphState>()(
   },
 
   onEdgesChange: (changes) => {
+    // Detect and clean up parameter bindings when edges are removed
+    changes.forEach((change) => {
+      if (change.type === 'remove') {
+        const edge = get().edges.find((e) => e.id === change.id);
+        if (edge?.targetHandle?.startsWith('param-in:')) {
+          const paramName = edge.targetHandle.split(':')[1];
+          set((state) => ({
+            nodes: state.nodes.map((node) => {
+              if (node.id === edge.target) {
+                const newBindings = { ...node.data.bindings };
+                if (newBindings[paramName]) {
+                   newBindings[paramName] = { mode: 'literal' };
+                }
+                return { 
+                  ...node, 
+                  data: { ...node.data, bindings: newBindings } 
+                };
+              }
+              return node;
+            })
+          }));
+        }
+      }
+    });
+
     set((state) => ({
       edges: applyEdgeChanges(changes, state.edges),
     }));
-    const hasStructuralChange = changes.some(
-      (c) => c.type === 'remove' || c.type === 'add'
-    );
-    if (hasStructuralChange) {
-      get().regenerateCode();
-    }
+    
+    get().regenerateCode();
   },
 
   onConnect: (connection) => {
     const { nodes, edges } = get();
     if (!isValidConnection(connection, nodes, edges)) return;
 
+    const { source, sourceHandle, target, targetHandle } = connection;
+    if (!source || !target || !sourceHandle || !targetHandle) return;
+
+    const isParamBinding = targetHandle.startsWith('param-in:');
+    
     // Remove existing edge to same target handle (replace connection)
     const newEdges = edges.filter(
       (e) =>
         !(e.target === connection.target && e.targetHandle === connection.targetHandle)
     );
 
-    // Get source node color for the edge
-    const sourceNode = nodes.find(n => n.id === connection.source);
-    let edgeColor = '#6366f1'; // default accent-primary
-    if (sourceNode) {
-      const category = sourceNode.data.functionDef.category;
-      const meta = categoryMeta[category];
-      if (meta) {
-        edgeColor = meta.color;
+    let edgeColor = '#6366f1'; 
+    let strokeWidth = 2;
+    let dashed = false;
+
+    if (isParamBinding) {
+      const paramName = targetHandle.split(':')[1];
+      edgeColor = '#eab308'; // Values/Math yellow
+      strokeWidth = 1.5;
+      dashed = true;
+
+      // Update target node data with binding info
+      set((state) => ({
+        nodes: state.nodes.map(n => {
+          if (n.id === target) {
+            const bindings = { ...n.data.bindings };
+            bindings[paramName] = { 
+              mode: 'value_node', 
+              boundNodeId: source,
+              outputKey: sourceHandle.includes(':') ? sourceHandle.split(':')[1] : undefined
+            };
+            return { ...n, data: { ...n.data, bindings } };
+          }
+          return n;
+        })
+      }));
+    } else {
+      const sourceNode = get().nodes.find((n) => n.id === source);
+      if (sourceNode) {
+        const category = sourceNode.data.functionDef.category;
+        const meta = categoryMeta[category];
+        if (meta) {
+          edgeColor = meta.color;
+        }
       }
     }
 
     const newConnection = {
       ...connection,
-      animated: true,
-      style: { stroke: edgeColor, strokeWidth: 2 },
+      animated: !isParamBinding,
+      style: { 
+        stroke: edgeColor, 
+        strokeWidth,
+        strokeDasharray: dashed ? '5,5' : undefined
+      },
+      type: 'hydra'
     };
 
     set({ edges: addEdge(newConnection, newEdges) });
@@ -167,15 +232,20 @@ export const useGraphStore = create<GraphState>()(
     });
 
     const nodeType = determineNodeType(fnDef);
+    let reactFlowType = 'hydraTransform';
+    if (nodeType === 'source') reactFlowType = 'hydraSource';
+    else if (nodeType === 'output') reactFlowType = 'hydraOutput';
+    else if (nodeType === 'value') reactFlowType = 'hydraValue';
 
     const newNode: Node<HydraNodeData> = {
       id: generateNodeId(),
-      type: nodeType === 'source' ? 'hydraSource' : (nodeType === 'output' ? 'hydraOutput' : 'hydraTransform'),
+      type: reactFlowType,
       position,
       data: {
         hydraFunction: hydraFunctionName,
         functionDef: fnDef,
         params,
+        bindings: {},
         label: hydraFunctionName,
         nodeType,
       },
@@ -375,11 +445,29 @@ export const useGraphStore = create<GraphState>()(
     set((state) => ({
       nodes: state.nodes.map((n) =>
         n.id === nodeId
+          ? { ...n, data: { ...n.data, params: { ...n.data.params, [paramName]: value } } }
+          : n
+      ),
+    }));
+    get().regenerateCode();
+  },
+
+  updateNodeBinding: (nodeId, paramName, binding) => {
+    set((state) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId
           ? {
               ...n,
               data: {
                 ...n.data,
-                params: { ...n.data.params, [paramName]: value },
+                bindings: {
+                  ...n.data.bindings,
+                  [paramName]: {
+                    mode: 'literal',
+                    ...(n.data.bindings?.[paramName] || {}),
+                    ...binding,
+                  } as HydraParamBinding,
+                },
               },
             }
           : n
@@ -563,6 +651,8 @@ export const useGraphStore = create<GraphState>()(
         data: {
           hydraFunction: n.data.hydraFunction,
           params: n.data.params,
+          bindings: n.data.bindings || {},
+          alias: n.data.alias,
         },
       })),
       edges: edges.map((e) => ({
@@ -592,7 +682,9 @@ export const useGraphStore = create<GraphState>()(
               hydraFunction: n.data.hydraFunction,
               functionDef: fnDef,
               params: n.data.params,
-              label: n.data.hydraFunction,
+              bindings: n.data.bindings || {},
+              alias: n.data.alias,
+              label: n.data.alias || n.data.hydraFunction,
               nodeType,
             },
           };

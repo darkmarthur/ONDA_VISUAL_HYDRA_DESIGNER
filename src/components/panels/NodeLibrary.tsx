@@ -21,7 +21,9 @@ import {
   Video,
   Sliders,
   Braces,
-  Music
+  Music,
+  Hash,
+  Percent
 } from 'lucide-react';
 import { hydraFunctionRegistry, categoryMeta } from '@/hydra/registry';
 import { HydraCategory } from '@/hydra/types';
@@ -39,6 +41,8 @@ const CategoryIcon = ({ category, size = 14 }: { category: string; size?: number
     case 'settings': return <Sliders size={size} />;
     case 'array': return <Braces size={size} />;
     case 'audio': return <Music size={size} />;
+    case 'value': return <Hash size={size} />;
+    case 'math': return <Percent size={size} />;
     default: return <Grid size={size} />;
   }
 };
@@ -50,6 +54,8 @@ const categories: { key: HydraCategory; label: string }[] = [
   { key: 'blend', label: 'Blend' },
   { key: 'modulate', label: 'Modulate' },
   { key: 'externalSource', label: 'External' },
+  { key: 'value', label: 'Values' },
+  { key: 'math', label: 'Math' },
   { key: 'settings', label: 'Settings' },
   { key: 'array', label: 'Array' },
   { key: 'audio', label: 'Audio' },

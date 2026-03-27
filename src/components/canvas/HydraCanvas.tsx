@@ -25,6 +25,7 @@ import { Activity, Box, Map, Trash2, Plus } from 'lucide-react';
 import SourceNode from './nodes/SourceNode';
 import TransformNode from './nodes/TransformNode';
 import OutputNode from './nodes/OutputNode';
+import ValueNode from './nodes/ValueNode';
 import HydraEdge from './HydraEdge';
 import FloatingCable from './FloatingCable';
 import { useGraphStore } from '@/store/graphStore';
@@ -34,6 +35,7 @@ const nodeTypes: NodeTypes = {
   hydraSource: SourceNode,
   hydraTransform: TransformNode,
   hydraOutput: OutputNode,
+  hydraValue: ValueNode,
 };
 
 const edgeTypes = {
@@ -189,6 +191,7 @@ function HydraCanvasInner() {
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}

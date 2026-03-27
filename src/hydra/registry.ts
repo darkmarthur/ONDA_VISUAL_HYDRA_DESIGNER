@@ -20,8 +20,8 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     category: 'source',
     description: 'Generate Perlin noise',
     params: [
-      { name: 'scale', type: 'float', default: 10, min: 0, max: 100, step: 0.1 },
-      { name: 'offset', type: 'float', default: 0.1, min: -2, max: 2, step: 0.01 },
+      { name: 'scale', type: 'float', default: 10, min: 0, max: 100, step: 0.1, canBind: true },
+      { name: 'offset', type: 'float', default: 0.1, min: -2, max: 2, step: 0.01, canBind: true },
     ],
   },
   {
@@ -30,9 +30,9 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     category: 'source',
     description: 'Generate Voronoi diagram',
     params: [
-      { name: 'scale', type: 'float', default: 5, min: 0, max: 100, step: 0.1 },
-      { name: 'speed', type: 'float', default: 0.3, min: -2, max: 2, step: 0.01 },
-      { name: 'blending', type: 'float', default: 0.3, min: 0, max: 1, step: 0.01 },
+      { name: 'scale', type: 'float', default: 5, min: 0, max: 100, step: 0.1, canBind: true },
+      { name: 'speed', type: 'float', default: 0.3, min: -2, max: 2, step: 0.01, canBind: true },
+      { name: 'blending', type: 'float', default: 0.3, min: 0, max: 1, step: 0.01, canBind: true },
     ],
   },
   {
@@ -41,9 +41,9 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     category: 'source',
     description: 'Visual oscillator',
     params: [
-      { name: 'frequency', type: 'float', default: 60, min: 0, max: 200, step: 0.1 },
-      { name: 'sync', type: 'float', default: 0.1, min: -2, max: 2, step: 0.01 },
-      { name: 'offset', type: 'float', default: 0, min: -2, max: 2, step: 0.01 },
+      { name: 'frequency', type: 'float', default: 60, min: 0, max: 200, step: 0.1, canBind: true },
+      { name: 'sync', type: 'float', default: 0.1, min: -2, max: 2, step: 0.01, canBind: true },
+      { name: 'offset', type: 'float', default: 0, min: -2, max: 2, step: 0.01, canBind: true },
     ],
   },
   {
@@ -52,9 +52,9 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     category: 'source',
     description: 'Geometric shape generator',
     params: [
-      { name: 'sides', type: 'float', default: 3, min: 1, max: 20, step: 0.1 },
-      { name: 'radius', type: 'float', default: 0.3, min: 0, max: 1, step: 0.01 },
-      { name: 'smoothing', type: 'float', default: 0.01, min: 0, max: 1, step: 0.001 },
+      { name: 'sides', type: 'float', default: 3, min: 1, max: 20, step: 0.1, canBind: true },
+      { name: 'radius', type: 'float', default: 0.3, min: 0, max: 1, step: 0.01, canBind: true },
+      { name: 'smoothing', type: 'float', default: 0.01, min: 0, max: 1, step: 0.001, canBind: true },
     ],
   },
   {
@@ -645,10 +645,11 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
   {
     name: 'fft',
     type: 'util',
-    category: 'audio',
-    description: 'Audio FFT signal',
+    category: 'value',
+    description: 'Audio FFT analysis',
     params: [
-      { name: 'bin', type: 'int', default: 0, min: 0, max: 4, step: 1 },
+      { name: 'bin', type: 'int', default: 0 },
+      { name: 'body', type: 'string', default: 'a.fft[0]' }
     ],
   },
   {
@@ -673,6 +674,91 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     category: 'audio',
     description: 'Show FFT visualizer',
     params: [],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  VALUES / GLOBALS (type: 'util')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'time',
+    type: 'util',
+    category: 'value',
+    description: 'Current time in seconds',
+    params: [
+      { name: 'body', type: 'string', default: 'time' }
+    ],
+  },
+  {
+    name: 'mouse.x',
+    type: 'util',
+    category: 'value',
+    description: 'Current mouse X position (0-1)',
+    params: [
+      { name: 'body', type: 'string', default: 'mouse.x' }
+    ],
+  },
+  {
+    name: 'mouse.y',
+    type: 'util',
+    category: 'value',
+    description: 'Current mouse Y position (0-1)',
+    params: [
+      { name: 'body', type: 'string', default: 'mouse.y' }
+    ],
+  },
+  {
+    name: 'width',
+    type: 'util',
+    category: 'value',
+    description: 'Canvas width',
+    params: [
+      { name: 'body', type: 'string', default: 'width' }
+    ],
+  },
+  {
+    name: 'height',
+    type: 'util',
+    category: 'value',
+    description: 'Canvas height',
+    params: [
+      { name: 'body', type: 'string', default: 'height' }
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  MATH (type: 'util')
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    name: 'sin',
+    type: 'util',
+    category: 'math',
+    description: 'Sine wave operator',
+    params: [
+      { name: 'value', type: 'float', default: 1, canBind: true },
+      { name: 'mult', type: 'float', default: 1, canBind: true },
+      { name: 'offset', type: 'float', default: 0, canBind: true },
+    ],
+  },
+  {
+    name: 'cos',
+    type: 'util',
+    category: 'math',
+    description: 'Cosine wave operator',
+    params: [
+      { name: 'value', type: 'float', default: 1, canBind: true },
+      { name: 'mult', type: 'float', default: 1, canBind: true },
+      { name: 'offset', type: 'float', default: 0, canBind: true },
+    ],
+  },
+  {
+    name: 'mod',
+    type: 'util',
+    category: 'math',
+    description: 'Modulo operator (e.g. time % 360)',
+    params: [
+      { name: 'value', type: 'float', default: 1, canBind: true },
+      { name: 'divisor', type: 'float', default: 360, canBind: true },
+    ],
   },
 ];
 
@@ -705,4 +791,6 @@ export const categoryMeta: Record<string, { label: string; color: string }> = {
   settings:       { label: 'Settings',  color: '#71717a' }, 
   array:          { label: 'Array',     color: '#c084fc' }, 
   audio:          { label: 'Audio',     color: '#2dd4bf' }, 
+  value:          { label: 'Values',    color: '#eab308' }, 
+  math:           { label: 'Math',      color: '#f97316' }, 
 };
