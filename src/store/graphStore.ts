@@ -754,15 +754,24 @@ export const useGraphStore = create<GraphState>()(
 
       if (data.tabs && data.tabs.length > 0) {
         const active = data.tabs.find((t: any) => t.id === data.activeTabId) || data.tabs[0];
+        const live = data.tabs.find((t: any) => t.id === data.liveTabId) || active;
+
         set({
           tabs: data.tabs.map((t: any) => ({ ...t, nodes: hydrateNodes(t.nodes) })),
           activeTabId: active.id,
-          liveTabId: data.liveTabId || active.id,
+          liveTabId: live.id,
           nodes: hydrateNodes(active.nodes),
           edges: active.edges,
           generatedCode: active.code
         });
+
+        // Re-Sync Live window code if exists
+        if (live.code) {
+          localStorage.setItem('hydra-live-code', live.code);
+          window.dispatchEvent(new Event('storage'));
+        }
       } else if (data.nodes) {
+        // ... rest
         const legacyNodes = hydrateNodes(data.nodes);
         const legacyTab: ProjectTab = {
           id: 'default',
