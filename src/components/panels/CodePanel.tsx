@@ -6,10 +6,11 @@
 'use client';
 
 import React, { useState } from 'react';
-// import Editor from 'react-simple-code-editor';
-// import Prism from 'prismjs';
-// import 'prismjs/components/prism-javascript';
-// import 'prismjs/themes/prism-tomorrow.css';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism-tomorrow.css';
 
 import { useGraphStore } from '@/store/graphStore';
 import { Terminal, Copy, Check, Trash2 } from 'lucide-react';
@@ -56,22 +57,18 @@ export default function CodePanel() {
       </div>
 
       <div className="code-panel__editor-container">
-        <textarea
-          className="code-panel__code-textarea"
+        <Editor
           value={generatedCode}
-          onChange={(e) => updateGraphFromCode(e.target.value)}
+          onValueChange={(code) => updateGraphFromCode(code)}
+          highlight={(code) => Prism.highlight(code, Prism.languages.javascript || Prism.languages.js, 'javascript')}
+          padding={20}
+          className="code-panel__editor"
           spellCheck={false}
           style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--accent-green)',
-            padding: '20px',
             fontFamily: 'var(--font-mono)',
-            fontSize: '13px',
-            resize: 'none',
-            outline: 'none',
+            fontSize: 13,
+            minHeight: '100%',
+            width: '100%',
           }}
         />
       </div>

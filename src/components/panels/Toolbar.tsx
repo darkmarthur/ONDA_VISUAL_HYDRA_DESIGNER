@@ -135,7 +135,7 @@ export default function Toolbar() {
               title="Open External Preview Window"
             >
               <Monitor size={14} className="toolbar__icon" />
-              Show Live
+              Performance window
             </button>
             <button
               className="toolbar__btn toolbar__btn--live-hide"
