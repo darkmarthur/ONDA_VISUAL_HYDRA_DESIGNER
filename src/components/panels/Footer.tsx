@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer__content">
         <span className="footer__text">
-          Made with ❤️ by <a href="https://www.instagram.com/mariodquiroz/" target="_blank" rel="noopener noreferrer" className="footer__link">MDQ</a> from <a href="https://ondavisual.mx/" target="_blank" rel="noopener noreferrer" className="footer__link">ONDAVISUAL.MX</a> / <a href="https://ondalabs.mx/" target="_blank" rel="noopener noreferrer" className="footer__link">ONDALABS.MX</a>
+          Made with ❤️ by <a href="https://www.instagram.com/mariodquiroz/" target="_blank" rel="noopener noreferrer" className="footer__link" data-tooltip="Report any application bugs to me directly via instagram ❤️">MDQ</a> from <a href="https://ondavisual.mx/" target="_blank" rel="noopener noreferrer" className="footer__link">ONDAVISUAL.MX</a> / <a href="https://ondalabs.mx/" target="_blank" rel="noopener noreferrer" className="footer__link">ONDALABS.MX</a>
           <span className="footer__divider"> — </span>
           Powered by the magnificent project <a href="https://hydra.ojack.xyz/" target="_blank" rel="noopener noreferrer" className="footer__link">HYDRA VIDEO SYNTH</a> from <a href="https://ojack.xyz/" target="_blank" rel="noopener noreferrer" className="footer__link">OLIVIA JACK</a>
           <span className="footer__divider"> — </span>
