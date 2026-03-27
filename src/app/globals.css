@@ -216,7 +216,7 @@ html, body {
 .toolbar__mode-btn {
   border: none;
   background: transparent;
-  padding: 6px 14px;
+  padding: 6px 16px;
   border-radius: 4px;
   color: var(--text-secondary);
   font-size: 12px;
@@ -224,6 +224,10 @@ html, body {
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .toolbar__mode-btn:hover {
@@ -232,8 +236,18 @@ html, body {
 
 .toolbar__mode-btn--active {
   background: var(--accent-primary);
-  color: white;
-  box-shadow: var(--shadow-sm);
+  color: var(--bg-deep);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+}
+
+.toolbar__mode-icon {
+  margin-right: 6px;
+  opacity: 0.8;
+}
+
+.toolbar__mode-btn--active .toolbar__mode-icon {
+  opacity: 1;
 }
 
 .toolbar__actions {
@@ -355,20 +369,24 @@ html, body {
 
 .toolbar__dropdown-btn {
   width: 100%;
-  padding: 6px 10px;
+  padding: 8px 10px;
   background: var(--accent-primary);
   border: none;
   border-radius: 6px;
-  color: white;
+  color: var(--bg-deep);
   font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .toolbar__dropdown-btn:hover {
-  filter: brightness(1.1);
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
 .toolbar__dropdown-item {

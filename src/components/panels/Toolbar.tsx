@@ -111,22 +111,20 @@ export default function Toolbar() {
       </div>
 
       <div className="toolbar__actions">
-        {/* Group 1: Workspace Mode Switcher */}
-        <div className="toolbar__group">
+        {/* Group 1: Workspace Mode Switcher - Refactored to Segmented Control */}
+        <div className="toolbar__mode-switch">
           <button
-            className={`toolbar__btn toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''}`}
+            className={`toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
             onClick={() => setEditorMode('visual')}
-            title="Switch to Node-based Visual Editor"
           >
-            <LayoutTemplate size={14} className="toolbar__icon" />
+            <LayoutTemplate size={14} className="toolbar__mode-icon" />
             Visual
           </button>
           <button
-            className={`toolbar__btn toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}
+            className={`toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
             onClick={() => setEditorMode('code')}
-            title="Switch to Fullscreen Code Editor"
           >
-            <Code size={14} className="toolbar__icon" />
+            <Code size={14} className="toolbar__mode-icon" />
             Code
           </button>
         </div>
