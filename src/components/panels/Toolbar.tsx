@@ -35,6 +35,9 @@ export default function Toolbar() {
   const setPerformancePatch=useGraphStore((s) => s.setPerformancePatch);
   const activeTabId=useGraphStore((s) => s.activeTabId);
   const liveTabId=useGraphStore((s) => s.liveTabId);
+  const tabs=useGraphStore((s) => s.tabs);
+  const activeTab = tabs.find(t => t.id === activeTabId);
+  const isPureCode = activeTab?.isPureCode;
 
   const [showSave, setShowSave]=useState(false);
   const [showMenu, setShowMenu]=useState(false);
@@ -119,11 +122,12 @@ export default function Toolbar() {
         {/* Group 1: Workspace Mode Switcher - Refactored to Segmented Control */}
         <div className="toolbar__mode-switch">
           <button
-            className={`toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''}`}
+            className={`toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''} ${isPureCode ? 'toolbar__mode-btn--warning' : ''}`}
             onClick={() => setEditorMode('visual')}
+            title={isPureCode ? "Non-graphable script detected" : "Switch to Visual Editor"}
           >
             <LayoutTemplate size={14} className="toolbar__mode-icon" />
-            Visual
+            Visual {isPureCode && <span style={{ marginLeft: '4px', color: '#ed4c67' }}>•</span>}
           </button>
           <button
             className={`toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}

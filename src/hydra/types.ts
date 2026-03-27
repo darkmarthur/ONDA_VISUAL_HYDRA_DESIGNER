@@ -28,7 +28,8 @@ export type HydraCategory =
   | 'array'
   | 'audio'
   | 'value'
-  | 'math';
+  | 'math'
+  | 'custom';
 
 // ─── Parameter definition ────────────────────────────────────────────────────
 export interface HydraParamDef {
@@ -65,7 +66,7 @@ export interface HydraParamBinding {
 }
 
 // ─── Node types for the visual editor ────────────────────────────────────────
-export type HydraNodeType = 'source' | 'transform' | 'output' | 'value';
+export type HydraNodeType = 'source' | 'transform' | 'output' | 'value' | 'custom';
 
 // ─── Data stored inside each React Flow node ─────────────────────────────────
 export interface HydraNodeData {
@@ -106,6 +107,7 @@ export interface ProjectTab {
   edges: Edge[];
   code: string;
   isLive?: boolean;
+  isPureCode?: boolean;
 }
 
 export interface SerializedNode {

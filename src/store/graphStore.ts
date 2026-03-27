@@ -601,11 +601,16 @@ export const useGraphStore = create<GraphState>()(
     if (newCode === get().generatedCode) return;
     try {
       const { nodes: newNodes, edges: newEdges } = buildGraphFromCode(newCode, get().nodes);
+      
+      // If we have non-empty code but the parser found almost nothing, 
+      // it might be a complex JS block that can't be represented as a graph.
+      const isPureCode = newCode.trim().length > 20 && newNodes.length === 0;
+
       set((s) => ({ 
         nodes: deduplicate(newNodes), 
         edges: deduplicate(newEdges.length > 0 ? newEdges : get().edges),
         generatedCode: newCode,
-        tabs: s.tabs.map(t => t.id === s.activeTabId ? { ...t, code: newCode } : t)
+        tabs: s.tabs.map(t => t.id === s.activeTabId ? { ...t, code: newCode, isPureCode } : t)
       }));
     } catch (err) {
       set((s) => ({ 
@@ -757,7 +762,6 @@ export const useGraphStore = create<GraphState>()(
           edges: active.edges,
           generatedCode: active.code
         });
-        get().regenerateCode();
       } else if (data.nodes) {
         const legacyNodes = hydrateNodes(data.nodes);
         const legacyTab: ProjectTab = {
@@ -765,7 +769,7 @@ export const useGraphStore = create<GraphState>()(
           name: 'Imported Patch',
           nodes: legacyNodes,
           edges: data.edges,
-          code: generateHydraCode(legacyNodes, data.edges)
+          code: data.generatedCode || generateHydraCode(legacyNodes, data.edges)
         };
         set({
           tabs: [legacyTab],
@@ -775,7 +779,6 @@ export const useGraphStore = create<GraphState>()(
           edges: data.edges,
           generatedCode: legacyTab.code
         });
-        get().regenerateCode();
       }
     } catch (err) { console.error('Deserialization failed', err); }
   },

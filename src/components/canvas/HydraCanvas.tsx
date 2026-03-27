@@ -26,6 +26,7 @@ import SourceNode from './nodes/SourceNode';
 import TransformNode from './nodes/TransformNode';
 import OutputNode from './nodes/OutputNode';
 import ValueNode from './nodes/ValueNode';
+import CustomNode from './nodes/CustomNode';
 import HydraEdge from './HydraEdge';
 import FloatingCable from './FloatingCable';
 import { useGraphStore } from '@/store/graphStore';
@@ -36,6 +37,7 @@ const nodeTypes: NodeTypes = {
   hydraTransform: TransformNode,
   hydraOutput: OutputNode,
   hydraValue: ValueNode,
+  hydraCustom: CustomNode,
 };
 
 const edgeTypes = {
@@ -181,8 +183,61 @@ function HydraCanvasInner() {
     [],
   );
 
+  const tabs = useGraphStore((s) => s.tabs);
+  const activeTabId = useGraphStore((s) => s.activeTabId);
+  const activeTab = tabs.find(t => t.id === activeTabId);
+
   return (
-    <div ref={reactFlowWrapper} className="hydra-canvas">
+    <div ref={reactFlowWrapper} className="hydra-canvas" style={{ position: 'relative' }}>
+      {activeTab?.isPureCode && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(10, 10, 15, 0.9)',
+          backdropFilter: 'blur(10px)',
+          textAlign: 'center',
+          padding: '2rem',
+          userSelect: 'none'
+        }}>
+          <div style={{ 
+            padding: '2.5rem', 
+            borderRadius: '24px', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            maxWidth: '420px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+          }}>
+            <Box size={42} style={{ color: '#ed4c67', marginBottom: '1.2rem', opacity: 0.9 }} />
+            <h3 style={{ color: 'white', marginBottom: '0.7rem', fontSize: '1.25rem', fontWeight: 600 }}>Advanced Script Detected</h3>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.8rem' }}>
+              This patch uses complex JavaScript logic or patterns that cannot be accurately represented as a node graph.
+            </p>
+            <div style={{ 
+              background: 'rgba(237, 76, 103, 0.1)',
+              color: '#ed4c67',
+              padding: '0.8rem 1.2rem',
+              borderRadius: '100px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              border: '1px solid rgba(237, 76, 103, 0.2)',
+              display: 'inline-block'
+            }}>
+              Visual Network Disabled
+            </div>
+            <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>
+              Use <strong>Code Mode</strong> in the top toolbar to edit this patch.
+            </p>
+          </div>
+        </div>
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}

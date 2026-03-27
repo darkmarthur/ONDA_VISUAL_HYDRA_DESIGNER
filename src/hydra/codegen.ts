@@ -30,24 +30,36 @@ export function generateHydraCode(
 
     if (nodes.length === 0) return '// Add nodes to generate Hydra code';
 
+    const customFunctions = nodes.filter(n => n.data.functionDef?.category === 'custom');
+    const functionStrings = customFunctions.map(n => {
+        const rawCode = n.data.params.code || '';
+        if (n.data.alias) return `// ${n.data.alias}\n${rawCode}`;
+        return rawCode;
+    }).filter(Boolean);
+
     const codeLines: string[] = [];
 
     for (const node of terminalNodes) {
       if (node.data.nodeType === 'output') {
         const chain = buildChainFromOutput(node, nodes, edges);
         if (chain) codeLines.push(chain.code);
-      } else {
-        // Orphan chain that doesn't go into an output (maybe just loose nodes)
+      } else if (node.data.functionDef?.category !== 'custom') {
+        // Orphan chain that doesn't go into an output (maybe just loose nodes), 
+        // ignore custom function definitions here as they are handled above
         const expr = buildNodeExpression(node.id, nodes, edges, new Set(), false);
         if (expr) codeLines.push(expr);
       }
     }
 
-    if (codeLines.length === 0) {
+    if (codeLines.length === 0 && functionStrings.length === 0) {
       return '// Connect nodes to build a visual chain';
     }
 
-    return codeLines.join('\n\n');
+    const sections = [];
+    if (functionStrings.length > 0) sections.push(functionStrings.join('\n\n'));
+    if (codeLines.length > 0) sections.push(codeLines.join('\n\n'));
+
+    return sections.join('\n\n');
   } catch (err) {
     console.error('Code generation failed:', err);
     return `// Code generation failed: ${err instanceof Error ? err.message : String(err)}`;
@@ -240,8 +252,8 @@ function getBoundParamValue(binding: any, nodes: Node<HydraNodeData>[]): string 
     const params = sourceNode.data.params;
     
     // If it's a buffer reference in a 'src' node, return literal name
-    if (fn === 'src' && /^(o[0-3]|s[0-3])$/.test(params.buffer)) {
-      return params.buffer;
+    if (fn === 'src' && /^(o[0-3]|s[0-3])$/.test(String(params.buffer))) {
+      return String(params.buffer);
     }
     
     // If it's a value chain (like constant or sin), we already handle it

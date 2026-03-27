@@ -811,4 +811,17 @@ export const categoryMeta: Record<string, { label: string; color: string }> = {
   audio:          { label: 'Audio',     color: '#2dd4bf' }, 
   value:          { label: 'Values',    color: '#eab308' }, 
   math:           { label: 'Math',      color: '#f97316' }, 
+  custom:         { label: 'Custom',    color: '#ed4c67' }, 
 };
+
+// Add Generic Custom Function definition
+hydraFunctionRegistry.push({
+  name: 'customFunction',
+  type: 'util',
+  category: 'custom',
+  description: 'A custom Javascript function definition',
+  params: [
+    { name: 'name', type: 'string', default: 'myFunc' },
+    { name: 'code', type: 'string', default: '() => Math.random()' },
+  ]
+});

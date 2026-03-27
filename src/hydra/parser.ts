@@ -60,6 +60,39 @@ class Parser {
       this.skipNoise();
       if (this.current >= this.tokens.length) break;
 
+      const token = this.peek();
+
+      // Detect "function name(...) { ... }"
+      if (token === 'function' || token === 'const' || token === 'let' || token === 'var') {
+          let block = '';
+          let braceLevel = 0;
+          let started = false;
+          const startIdx = this.current;
+
+          while (this.current < this.tokens.length) {
+            const t = this.consume();
+            block += (block ? ' ' : '') + t;
+            if (t === '{') { braceLevel++; started = true; }
+            else if (t === '}') { braceLevel--; }
+            
+            if (started && braceLevel === 0) break;
+            // Safety: stop if we hit another function keyword before a brace (invalid state usually)
+            if (!started && this.current > startIdx + 10 && (t === ';' || t === '\n')) break;
+          }
+
+          if (block.includes('{')) {
+              // Extract a name if possible
+              const nameMatch = block.match(/(?:function|const|let|var)\s+([a-zA-Z_$][\w$]*)/);
+              const name = nameMatch ? nameMatch[1] : 'customFunc';
+              chains.push({ fn: 'customFunction', args: [name, block] });
+              continue;
+          } else {
+              // Rollback if it wasn't a function block
+              this.current = startIdx + 1;
+              continue;
+          }
+      }
+
       const chain = this.parseExpression();
       if (chain) {
         chains.push(chain);
@@ -135,7 +168,11 @@ class Parser {
     if (!token || token === ')') return undefined;
 
     if (/^[a-zA-Z_$]/.test(token) && this.peekNext() === '(') {
-      return this.parseExpression();
+      // Check if it's a known Hydra command before trying to parse as chain
+      if (getHydraFunction(token)) {
+          return this.parseExpression();
+      }
+      // If unknown (Custom JS function like r()), fall through to treat as literal expression
     }
 
     let expr = '';
@@ -206,7 +243,8 @@ export function buildGraphFromCode(
     );
 
     const id = existing?.id || generateUniqueNodeId();
-    const nodeType = fnDef.category === 'output' ? 'output' : 
+    const nodeType = fnDef.category === 'custom' ? 'custom' :
+                     fnDef.category === 'output' ? 'output' : 
                      fnDef.category === 'value' ? 'value' : 
                      fnDef.type === 'src' ? 'source' : 'transform';
 
@@ -239,7 +277,10 @@ export function buildGraphFromCode(
 
     const node: Node<HydraNodeData> = {
       id,
-      type: nodeType === 'source' ? 'hydraSource' : nodeType === 'output' ? 'hydraOutput' : nodeType === 'value' ? 'hydraValue' : 'hydraTransform',
+      type: nodeType === 'custom' ? 'hydraCustom' : 
+            nodeType === 'source' ? 'hydraSource' : 
+            nodeType === 'output' ? 'hydraOutput' : 
+            nodeType === 'value' ? 'hydraValue' : 'hydraTransform',
       position: existing?.position || { x, y },
       data: {
         hydraFunction: hydraFn,
