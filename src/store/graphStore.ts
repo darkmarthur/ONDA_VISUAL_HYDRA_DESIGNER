@@ -32,6 +32,7 @@ interface GraphState {
   generatedCode: string;
   hydraError: string | null;
   editorMode: 'visual' | 'code';
+  activeDraftConnection: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null;
 
   // ─── Actions ─────────────────────────────────────────────────────────────
   onNodesChange: (changes: NodeChange<Node<HydraNodeData>>[]) => void;
@@ -39,6 +40,7 @@ interface GraphState {
   onConnect: (connection: Connection) => void;
   addNode: (hydraFunctionName: string, position: { x: number; y: number }) => void;
   insertNodeOnEdge: (edgeId: string, hydraFunctionName: string) => void;
+  addAndConnectNode: (hydraFunctionName: string, position: { x: number; y: number }, connectFrom: { nodeId: string; handleId: string | null; handleType: string | null }) => void;
   removeNode: (nodeId: string) => void;
   setNodeAlias: (nodeId: string, alias: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
@@ -49,6 +51,7 @@ interface GraphState {
   regenerateCode: () => void;
   updateGraphFromCode: (newCode: string) => void;
   setEditorMode: (mode: 'visual' | 'code') => void;
+  setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   serializeGraph: () => string;
   deserializeGraph: (json: string) => void;
@@ -77,6 +80,7 @@ export const useGraphStore = create<GraphState>()(
   generatedCode: '// Add nodes and connect them to generate Hydra code',
   hydraError: null,
   editorMode: 'visual',
+  activeDraftConnection: null,
 
   onNodesChange: (changes) => {
     set((state) => ({
@@ -161,6 +165,81 @@ export const useGraphStore = create<GraphState>()(
     };
 
     set((state) => ({ nodes: [...state.nodes, newNode] }));
+  },
+
+  addAndConnectNode: (hydraFunctionName, position, connectFrom) => {
+    // Add the node
+    const fnDef = getHydraFunction(hydraFunctionName);
+    if (!fnDef) return;
+
+    const params: Record<string, number> = {};
+    fnDef.params.forEach((p) => { params[p.name] = p.default; });
+
+    const nodeType = determineNodeType(fnDef.type);
+    const newNodeId = generateNodeId();
+
+    const newNode: Node<HydraNodeData> = {
+      id: newNodeId,
+      type: nodeType === 'source' ? 'hydraSource' : 'hydraTransform',
+      position,
+      data: {
+        hydraFunction: hydraFunctionName,
+        functionDef: fnDef,
+        params,
+        label: hydraFunctionName,
+        nodeType,
+      },
+    };
+
+    // Build the connection edge
+    // Are we pulling from a source output or from a target input backwards?
+    let newEdge: Edge | null = null;
+    let edgeColor = '#6366f1';
+    
+    if (connectFrom.handleType === 'source') {
+      // Pulling from an output, connecting to the new node's input.
+      const sourceNode = get().nodes.find(n => n.id === connectFrom.nodeId);
+      if (sourceNode) {
+        const cat = sourceNode.data.functionDef.category;
+        const meta = require('@/hydra/registry').categoryMeta[cat];
+        if (meta) edgeColor = meta.color;
+      }
+
+      newEdge = {
+        id: `e-${connectFrom.nodeId}-${newNodeId}`,
+        source: connectFrom.nodeId,
+        sourceHandle: connectFrom.handleId,
+        target: newNodeId,
+        targetHandle: 'texture-in',
+        animated: true,
+        style: { stroke: edgeColor, strokeWidth: 2 },
+      };
+    } else {
+      // Pulling backward from a target input, connecting the new node's output to it.
+      const cat = fnDef.category;
+      const meta = require('@/hydra/registry').categoryMeta[cat];
+      if (meta) edgeColor = meta.color;
+
+      newEdge = {
+        id: `e-${newNodeId}-${connectFrom.nodeId}`,
+        source: newNodeId,
+        sourceHandle: 'texture-out',
+        target: connectFrom.nodeId,
+        targetHandle: connectFrom.handleId,
+        animated: true,
+        style: { stroke: edgeColor, strokeWidth: 2 },
+      };
+    }
+
+    // Now validate it semantically to make sure we don't insert absurd connections
+    // Actually validation is optional here since we already filter the menu choices,
+    // but React Flow edges just snap based on type.
+    
+    set((state) => ({ 
+      nodes: [...state.nodes, newNode],
+      edges: newEdge ? [...state.edges, newEdge] : state.edges 
+    }));
+    get().regenerateCode();
   },
 
   insertNodeOnEdge: (edgeId, hydraFunctionName) => {
@@ -394,6 +473,10 @@ export const useGraphStore = create<GraphState>()(
 
   setEditorMode: (mode) => {
     set({ editorMode: mode });
+  },
+
+  setActiveDraftConnection: (conn) => {
+    set({ activeDraftConnection: conn });
   },
 
   clearGraph: () => {

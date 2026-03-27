@@ -16,7 +16,7 @@ import Toolbar from './panels/Toolbar';
 import TabMenu from './panels/TabMenu';
 
 export default function HydraEditor() {
-  const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string }>({ open: false });
+  const [tabMenuConfig, setTabMenuConfig] = useState<{ open: boolean; insertEdgeId?: string; position?: { x: number; y: number } }>({ open: false });
   const editorMode = useGraphStore((s) => s.editorMode);
 
   useEffect(() => {
@@ -49,7 +49,11 @@ export default function HydraEditor() {
     };
 
     const handleCustomMenu = (e: any) => {
-      setTabMenuConfig({ open: true, insertEdgeId: e.detail?.insertEdgeId });
+      setTabMenuConfig({ 
+        open: true, 
+        insertEdgeId: e.detail?.insertEdgeId,
+        position: e.detail?.position
+      });
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -92,6 +96,7 @@ export default function HydraEditor() {
         <TabMenu 
           onClose={() => setTabMenuConfig({ open: false })} 
           insertEdgeId={tabMenuConfig.insertEdgeId}
+          spawnPosition={tabMenuConfig.position}
         />
       )}
     </div>

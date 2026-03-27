@@ -16,6 +16,7 @@ import {
   useReactFlow,
   NodeTypes,
   Edge,
+  OnConnectStartParams,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -43,8 +44,46 @@ function HydraCanvasInner() {
   const addNode = useGraphStore((s) => s.addNode);
   const setSelectedNode = useGraphStore((s) => s.setSelectedNode);
   const removeEdge = useGraphStore((s) => s.removeEdge);
+  const setActiveDraftConnection = useGraphStore((s) => s.setActiveDraftConnection);
+  const activeDraftConnection = useGraphStore((s) => s.activeDraftConnection);
 
   const [edgeMenu, setEdgeMenu] = React.useState<{ id: string; x: number; y: number } | null>(null);
+
+  const onConnectStart = useCallback((_: any, params: OnConnectStartParams) => {
+    if (params.nodeId) {
+      setActiveDraftConnection({
+        nodeId: params.nodeId,
+        handleId: params.handleId,
+        handleType: params.handleType
+      });
+    }
+  }, [setActiveDraftConnection]);
+
+  const onConnectEnd = useCallback(
+    (event: any) => {
+      const target = event.target as HTMLElement;
+      if (target.classList.contains('react-flow__pane')) {
+        const { x, y } = screenToFlowPosition({
+          x: event.clientX || (event.touches ? event.touches[0].clientX : 0),
+          y: event.clientY || (event.touches ? event.touches[0].clientY : 0),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('open-tab-menu', {
+            detail: {
+              isDraftConnection: true,
+              position: { x, y },
+            },
+          })
+        );
+      } else {
+        if (!target.classList.contains('react-flow__handle')) {
+           setTimeout(() => setActiveDraftConnection(null), 200);
+        }
+      }
+    },
+    [screenToFlowPosition, setActiveDraftConnection]
+  );
 
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -82,7 +121,8 @@ function HydraCanvasInner() {
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
     setEdgeMenu(null);
-  }, [setSelectedNode]);
+    setActiveDraftConnection(null);
+  }, [setSelectedNode, setActiveDraftConnection]);
 
   const onEdgeDoubleClick = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
@@ -117,6 +157,8 @@ function HydraCanvasInner() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}

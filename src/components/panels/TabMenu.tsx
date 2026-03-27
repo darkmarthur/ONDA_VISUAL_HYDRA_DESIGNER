@@ -8,6 +8,7 @@ import { HydraCategory } from '@/hydra/types';
 interface TabMenuProps {
   onClose: () => void;
   insertEdgeId?: string;
+  spawnPosition?: { x: number; y: number };
 }
 
 const CATEGORIES: { key: HydraCategory | 'all'; label: string }[] = [
@@ -20,13 +21,16 @@ const CATEGORIES: { key: HydraCategory | 'all'; label: string }[] = [
   { key: 'output', label: 'Output' },
 ];
 
-export default function TabMenu({ onClose, insertEdgeId }: TabMenuProps) {
+export default function TabMenu({ onClose, insertEdgeId, spawnPosition }: TabMenuProps) {
   const [activeCategory, setActiveCategory] = useState<HydraCategory | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const addNode = useGraphStore((s) => s.addNode);
   const insertNodeOnEdge = useGraphStore((s) => s.insertNodeOnEdge);
+  const addAndConnectNode = useGraphStore((s) => s.addAndConnectNode);
+  const activeDraftConnection = useGraphStore((s) => s.activeDraftConnection);
+  const setActiveDraftConnection = useGraphStore((s) => s.setActiveDraftConnection);
   const { addOutputNode } = require('@/store/graphStore');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -52,12 +56,19 @@ export default function TabMenu({ onClose, insertEdgeId }: TabMenuProps) {
     list = [...list, ...outputFns as any];
 
     if (insertEdgeId) {
-      // If inserting into an edge, we shouldn't allow Sources or Output nodes strictly, 
-      // but let's just priorize Transform nodes (geometry, color, blend, modulate) 
-      // by defaulting to them. The user can still bypass it if they search.
       list = list.filter((fn) => 
         !fn.isOutput && fn.category !== 'source'
       );
+    }
+
+    if (activeDraftConnection) {
+      if (activeDraftConnection.handleType === 'source') {
+        // We are pulling from an output, need a node that can receive an input
+        list = list.filter((fn) => fn.type !== 'src' && !fn.isOutput);
+      } else if (activeDraftConnection.handleType === 'target') {
+        // We are pulling from an input (backwards), need a node that can produce an output
+        list = list.filter((fn) => !fn.isOutput);
+      }
     }
 
     if (activeCategory !== 'all') {
@@ -84,8 +95,15 @@ export default function TabMenu({ onClose, insertEdgeId }: TabMenuProps) {
     }
 
     const offset = Math.random() * 40;
-    const x = window.innerWidth / 2 - 100 + offset;
-    const y = window.innerHeight / 2 - 50 + offset;
+    const x = spawnPosition?.x ?? (window.innerWidth / 2 - 100 + offset);
+    const y = spawnPosition?.y ?? (window.innerHeight / 2 - 50 + offset);
+
+    if (activeDraftConnection) {
+      addAndConnectNode(fn.name, { x, y }, activeDraftConnection);
+      setActiveDraftConnection(null);
+      onClose();
+      return;
+    }
 
     if (fn.isOutput) {
       addOutputNode(fn.buffer as any, { x, y });
@@ -98,6 +116,7 @@ export default function TabMenu({ onClose, insertEdgeId }: TabMenuProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault();
+      setActiveDraftConnection(null);
       onClose();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -133,6 +152,7 @@ export default function TabMenu({ onClose, insertEdgeId }: TabMenuProps) {
   // Prevent clicks from bubling to canvas pane click
   const handleBackdropClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setActiveDraftConnection(null);
     onClose();
   };
 
