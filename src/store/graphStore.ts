@@ -713,9 +713,21 @@ export const useGraphStore = create<GraphState>()(
     });
   },
 
-  deserializeGraph: (json) => {
+  deserializeGraph: (input: string | any) => {
     try {
-      const data = JSON.parse(json);
+      if (!input) return;
+      
+      // Handle cases where input might already be an object or a malformed string
+      let data: any;
+      if (typeof input === 'string') {
+        if (input === "[object Object]") {
+          console.warn("Attempted to deserialize '[object Object]'. Patch data might be corrupted.");
+          return;
+        }
+        data = JSON.parse(input);
+      } else {
+        data = input;
+      }
       
       const hydrateNodes = (nodes: any[]) => nodes.map(n => {
         if (!n.data.functionDef) {
@@ -724,6 +736,8 @@ export const useGraphStore = create<GraphState>()(
         }
         return n;
       });
+
+      if (!data) return;
 
       if (data.tabs && data.tabs.length > 0) {
         const active = data.tabs.find((t: any) => t.id === data.activeTabId) || data.tabs[0];
@@ -735,6 +749,7 @@ export const useGraphStore = create<GraphState>()(
           edges: active.edges,
           generatedCode: active.code
         });
+        get().regenerateCode();
       } else if (data.nodes) {
         const legacyNodes = hydrateNodes(data.nodes);
         const legacyTab: ProjectTab = {
@@ -752,6 +767,7 @@ export const useGraphStore = create<GraphState>()(
           edges: data.edges,
           generatedCode: legacyTab.code
         });
+        get().regenerateCode();
       }
     } catch (err) { console.error('Deserialization failed', err); }
   },

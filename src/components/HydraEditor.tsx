@@ -81,11 +81,11 @@ export default function HydraEditor() {
         {/* Center — Canvas or Code */}
         <div className="editor__center">
           <TabsPanel />
-          <div style={{ display: editorMode === 'visual' ? 'flex' : 'none', flex: 1, width: '100%', height: 'calc(100% - 34px)' }}>
+          <div style={{ display: editorMode === 'visual' ? 'flex' : 'none', flex: 1, width: '100%', minHeight: 0 }}>
             <HydraCanvas />
           </div>
           {editorMode === 'code' && (
-            <div style={{ height: 'calc(100% - 34px)', width: '100%' }}>
+            <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
               <CodePanel />
             </div>
           )}
