@@ -14,7 +14,6 @@ interface ParsedCall {
   chain?: ParsedCall;
 }
 
-// Global Unique ID System to prevent collisions during batch parsing
 let sessionNodeIdCounter = 0;
 let sessionEdgeIdCounter = 0;
 
@@ -84,7 +83,6 @@ class Parser {
 
     const fn = this.consume();
     if (this.peek() !== '(') {
-      // It's a variable reference (o0, o1...) rather than a call
       return { fn, args: [] };
     }
 
@@ -136,7 +134,6 @@ class Parser {
     const token = this.peek();
     if (!token || token === ')') return undefined;
 
-    // Check for lambda, call, or array
     if (/^[a-zA-Z_$]/.test(token) && this.peekNext() === '(') {
       return this.parseExpression();
     }
@@ -159,8 +156,6 @@ class Parser {
     }
 
     const trimmed = expr.trim();
-    
-    // Recursive check: if the expression itself looks like a buffer name or simple var
     if (/^(o[0-3]|s[0-3])$/.test(trimmed)) {
        return { fn: trimmed, args: [] };
     }
@@ -195,7 +190,6 @@ export function buildGraphFromCode(
   const edges: Edge[] = [];
 
   const createNode = (fn: string, args: any[], x: number, y: number): Node<HydraNodeData> | null => {
-    // If it's a raw buffer (o0, o1...), map it to a 'src' call internally
     let hydraFn = fn;
     let hydraArgs = args;
     if (/^(o[0-3]|s[0-3])$/.test(fn)) {
@@ -226,9 +220,16 @@ export function buildGraphFromCode(
       const arg = hydraArgs[i + startIdx];
       if (arg === undefined) {
         params[p.name] = p.default;
-      } else if (typeof arg === 'string' && (arg.includes('=>') || isNaN(parseFloat(arg)))) {
-        params[p.name] = "";
-        bindings[p.name] = { mode: 'expression', expression: arg };
+      } else if (typeof arg === 'string') {
+        // Special case: Buffer names are literal strings, not expressions
+        if (/^(o[0-3]|s[0-3])$/.test(arg)) {
+          params[p.name] = arg;
+        } else if (arg.includes('=>') || isNaN(parseFloat(arg))) {
+          params[p.name] = "";
+          bindings[p.name] = { mode: 'expression', expression: arg };
+        } else {
+          params[p.name] = parseFloat(arg);
+        }
       } else if (typeof arg === 'object' && arg.fn) {
         params[p.name] = p.default;
       } else {
@@ -278,29 +279,37 @@ export function buildGraphFromCode(
       const isCombine = node.data.functionDef.type.startsWith('combine');
 
       currentCall.args.forEach((arg, i) => {
-        if (typeof arg === 'object' && arg.fn) {
-          // Recursive chain processing for nested arguments
-          const argTailNode = processChain(arg, x - 350, y + 220);
-          if (argTailNode) {
-            const isTexture = argTailNode.data.nodeType === 'source' || argTailNode.data.nodeType === 'transform';
-            const isSecondaryTexture = isCombine && i === 0;
-            const paramDef = isCombine ? node.data.functionDef.params[i - 1] : node.data.functionDef.params[i];
+        let argTailNode: Node<HydraNodeData> | null = null;
+        let isSecondaryTexture = false;
 
-            edges.push({
-              id: generateUniqueEdgeId(),
-              source: argTailNode.id,
-              target: node.id,
-              sourceHandle: isTexture ? 'texture-out' : 'value-out',
-              targetHandle: isSecondaryTexture ? 'texture-secondary' : `param-in:${paramDef?.name}`,
-              type: 'hydra',
-              animated: isTexture
-            });
-          }
+        if (isCombine && i === 0) {
+           isSecondaryTexture = true;
+           if (typeof arg === 'object' && arg.fn) {
+             argTailNode = processChain(arg, x - 350, y + 250);
+           } else if (typeof arg === 'string' && /^(o[0-3]|s[0-3])$/.test(arg)) {
+             argTailNode = createNode('src', [arg], x - 350, y + 250);
+           }
+        } else if (typeof arg === 'object' && arg.fn) {
+           argTailNode = processChain(arg, x - 350, y + 250);
+        }
+
+        if (argTailNode) {
+          const paramDef = isCombine ? node.data.functionDef.params[i - 1] : node.data.functionDef.params[i];
+          const isTexture = argTailNode.data.nodeType === 'source' || argTailNode.data.nodeType === 'transform';
+          
+          edges.push({
+            id: generateUniqueEdgeId(),
+            source: argTailNode.id,
+            target: node.id,
+            sourceHandle: isTexture ? 'texture-out' : 'value-out',
+            targetHandle: isSecondaryTexture ? 'texture-secondary' : `param-in:${paramDef?.name}`,
+            type: 'hydra'
+          });
         }
       });
 
       prevNode = node;
-      x += 360;
+      x += 380;
       currentCall = currentCall.chain;
     }
 
@@ -308,7 +317,7 @@ export function buildGraphFromCode(
   };
 
   parsedChains.forEach((rootChain, idx) => {
-    processChain(rootChain, 50, 100 + (idx * 550));
+    processChain(rootChain, 50, 100 + (idx * 600));
   });
 
   return { nodes: deduplicate(nodes), edges: deduplicate(edges) };

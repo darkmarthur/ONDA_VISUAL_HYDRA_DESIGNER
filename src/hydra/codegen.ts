@@ -113,8 +113,10 @@ function buildNodeExpression(
   if (fnDef.type === 'src') {
     let base = `${fnName}(${paramStr})`;
     if (fnName === 'src') {
-      const bufferIdx = node.data.params.buffer ?? 0;
-      base = `src(o${bufferIdx})`;
+      const buf = node.data.params.buffer ?? 0;
+      // Determine if buf is a literal like 'o0' or just a number
+      const fullBuf = /^[os][0-3]$/.test(String(buf)) ? String(buf) : `o${buf}`;
+      base = `src(${fullBuf})`;
     }
     
     if (isNested) return base;
@@ -230,6 +232,11 @@ function getBoundParamValue(binding: any, nodes: Node<HydraNodeData>[]): string 
 
     const fn = sourceNode.data.hydraFunction;
     const params = sourceNode.data.params;
+    
+    // If it's a buffer reference in a 'src' node, return literal name
+    if (fn === 'src' && /^(o[0-3]|s[0-3])$/.test(params.buffer)) {
+      return params.buffer;
+    }
     
     // If it's a value chain (like constant or sin), we already handle it
     if (fn === 'constant') {

@@ -79,6 +79,15 @@ export const hydraFunctionRegistry: HydraFunctionDef[] = [
     ],
   },
   {
+    name: 'src',
+    type: 'src',
+    category: 'source',
+    description: 'Reference a buffer (o0, o1, o2, o3) or another texture',
+    params: [
+      { name: 'buffer', type: 'string', default: 'o0' },
+    ],
+  },
+  {
     name: 'prev',
     type: 'src',
     category: 'source',
