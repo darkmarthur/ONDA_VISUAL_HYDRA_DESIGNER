@@ -53,8 +53,8 @@ interface GraphState {
   switchTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
   setPerformancePatch: (id?: string) => void;
-
-  // ─── Core Actions ────────────────────────────────────────────────────────
+  saveAutosave: () => void;
+  loadAutosave: () => void;
   onNodesChange: (changes: NodeChange<Node<HydraNodeData>>[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
@@ -79,7 +79,6 @@ interface GraphState {
   addHydraLog: (type: 'error' | 'info', message: string) => void;
   clearHydraLogs: () => void;
   setAutosaveEnabled: (enabled: boolean) => void;
-  loadAutosave: () => void;
   setActiveDraftConnection: (conn: { nodeId: string; handleId: string | null; handleType: 'source' | 'target' | null } | null) => void;
   clearGraph: () => void;
   addOutputNode: (buffer: HydraOutput, position: { x: number; y: number }) => void;
@@ -152,6 +151,7 @@ export const useGraphStore = create<GraphState>()(
       generatedCode: DEFAULT_CODE
     }));
     get().updateGraphFromCode(DEFAULT_CODE);
+    get().saveAutosave();
   },
 
   removeTab: (id) => {
@@ -169,10 +169,10 @@ export const useGraphStore = create<GraphState>()(
       get().switchTab(nextActiveId);
     }
     
-    // If Live tab was removed, stop live
     if (liveTabId === id) {
       set({ liveTabId: null });
     }
+    get().saveAutosave();
   },
 
   switchTab: (id) => {
@@ -195,12 +195,14 @@ export const useGraphStore = create<GraphState>()(
       edges: targetTab.edges,
       generatedCode: targetTab.code
     });
+    get().saveAutosave();
   },
 
   renameTab: (id, name) => {
     set((s) => ({
       tabs: s.tabs.map(t => t.id === id ? { ...t, name } : t)
     }));
+    get().saveAutosave();
   },
 
   setPerformancePatch: (id) => {
@@ -217,6 +219,7 @@ export const useGraphStore = create<GraphState>()(
     // Push code to performance window explicitly
     localStorage.setItem('hydra-live-code', targetTab.code);
     window.dispatchEvent(new Event('storage'));
+    get().saveAutosave();
   },
 
   // ─── Core Graph Handlers ─────────────────────────────────────────────────
@@ -604,11 +607,13 @@ export const useGraphStore = create<GraphState>()(
         generatedCode: newCode,
         tabs: s.tabs.map(t => t.id === s.activeTabId ? { ...t, code: newCode } : t)
       }));
-      localStorage.setItem('hydra-live-code', newCode);
-      window.dispatchEvent(new Event('storage'));
     } catch (err) {
-      set({ generatedCode: newCode });
+      set((s) => ({ 
+        generatedCode: newCode,
+        tabs: s.tabs.map(t => t.id === s.activeTabId ? { ...t, code: newCode } : t)
+      }));
     }
+    get().saveAutosave();
   },
 
   setEditorMode: (mode) => set({ editorMode: mode }),
@@ -696,6 +701,12 @@ export const useGraphStore = create<GraphState>()(
       edges: deduplicate(newEdge ? [...state.edges, newEdge] : state.edges) 
     }));
     get().regenerateCode();
+  },
+
+  saveAutosave: () => {
+    if (get().autosaveEnabled) {
+      localStorage.setItem('hydra-autosave', get().serializeGraph());
+    }
   },
 
   serializeGraph: () => {
