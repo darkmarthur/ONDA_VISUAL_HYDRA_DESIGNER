@@ -36,8 +36,8 @@ export default function Toolbar() {
   const activeTabId=useGraphStore((s) => s.activeTabId);
   const liveTabId=useGraphStore((s) => s.liveTabId);
   const tabs=useGraphStore((s) => s.tabs);
-  const activeTab = tabs.find(t => t.id === activeTabId);
-  const isPureCode = activeTab?.isPureCode;
+  const activeTab=tabs.find(t => t.id===activeTabId);
+  const isPureCode=activeTab?.isPureCode;
 
   const [showSave, setShowSave]=useState(false);
   const [showMenu, setShowMenu]=useState(false);
@@ -114,7 +114,7 @@ export default function Toolbar() {
       <div className="toolbar__brand">
         <div className="toolbar__brand-group">
           <h1 className="toolbar__title">HYDRA｜DESIGNER</h1>
-          <span className="toolbar__subtitle">BETA V0.01</span>
+          <span className="toolbar__subtitle">BETA V0.01 <a href="https://github.com/darkmarthur/ONDA_VISUAL_HYDRA_DESIGNER" target="_blank" rel="noopener noreferrer" className="footer__link">GitHub ↗</a></span>
         </div>
       </div>
 
@@ -122,12 +122,12 @@ export default function Toolbar() {
         {/* Group 1: Workspace Mode Switcher - Refactored to Segmented Control */}
         <div className="toolbar__mode-switch">
           <button
-            className={`toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''} ${isPureCode ? 'toolbar__mode-btn--warning' : ''}`}
+            className={`toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''} ${isPureCode? 'toolbar__mode-btn--warning':''}`}
             onClick={() => setEditorMode('visual')}
-            title={isPureCode ? "Non-graphable script detected" : "Switch to Visual Editor"}
+            title={isPureCode? "Non-graphable script detected":"Switch to Visual Editor"}
           >
             <LayoutTemplate size={14} className="toolbar__mode-icon" />
-            Visual {isPureCode && <span style={{ marginLeft: '4px', color: '#ed4c67' }}>•</span>}
+            Visual {isPureCode&&<span style={{ marginLeft: '4px', color: '#ed4c67' }}>•</span>}
           </button>
           <button
             className={`toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}

@@ -598,7 +598,7 @@ export const useGraphStore = create<GraphState>()(
   },
 
   updateGraphFromCode: (newCode) => {
-    if (newCode === get().generatedCode) return;
+    if (newCode === get().generatedCode && get().nodes.length > 0) return;
     try {
       const { nodes: newNodes, edges: newEdges } = buildGraphFromCode(newCode, get().nodes);
       
@@ -608,9 +608,15 @@ export const useGraphStore = create<GraphState>()(
 
       set((s) => ({ 
         nodes: deduplicate(newNodes), 
-        edges: deduplicate(newEdges.length > 0 ? newEdges : get().edges),
+        edges: deduplicate(newEdges.length > 0 || newNodes.length > 0 ? newEdges : get().edges),
         generatedCode: newCode,
-        tabs: s.tabs.map(t => t.id === s.activeTabId ? { ...t, code: newCode, isPureCode } : t)
+        tabs: s.tabs.map(t => t.id === s.activeTabId ? { 
+          ...t, 
+          code: newCode, 
+          isPureCode,
+          nodes: deduplicate(newNodes),
+          edges: deduplicate(newEdges)
+        } : t)
       }));
     } catch (err) {
       set((s) => ({ 
