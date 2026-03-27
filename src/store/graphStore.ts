@@ -539,21 +539,18 @@ export const useGraphStore = create<GraphState>()(
     
     // External performance window sync
     localStorage.setItem('hydra-live-code', code);
-    // Dispatch storage event manually for same-window popups
     window.dispatchEvent(new Event('storage'));
 
-    // Autosave logic
+    // Persistent Autosave
     if (get().autosaveEnabled) {
-      const json = get().serializeGraph();
-      localStorage.setItem('hydra-autosave', json);
+      localStorage.setItem('hydra-autosave', get().serializeGraph());
     }
   },
 
   setAutosaveEnabled: (enabled) => {
     set({ autosaveEnabled: enabled });
     if (enabled) {
-      const json = get().serializeGraph();
-      localStorage.setItem('hydra-autosave', json);
+      localStorage.setItem('hydra-autosave', get().serializeGraph());
     } else {
       localStorage.removeItem('hydra-autosave');
     }
@@ -576,26 +573,20 @@ export const useGraphStore = create<GraphState>()(
     try {
       const { nodes: newNodes, edges: newEdges } = buildGraphFromCode(newCode, get().nodes);
       
-      // Only perform structural update if we actually parsed something 
-      // or if the code is truly empty. This avoids wiping the canvas during mid-typing.
-      if (newNodes.length === 0 && newCode.trim().length > 5) {
-        set({ generatedCode: newCode });
-        return;
-      }
-
+      // Update state
       set({ 
         nodes: newNodes, 
-        edges: newEdges.length > 0 ? newEdges : get().edges, // Fallback to avoid snapping edges during parse
+        edges: newEdges.length > 0 ? newEdges : get().edges,
         generatedCode: newCode 
       });
 
-      // Special case: if we have edges now, update them
-      if (newEdges.length > 0) {
-        set({ edges: newEdges });
-      }
-      
+      // Crucial: Update localStorage and trigger autosave for code changes too
       localStorage.setItem('hydra-live-code', newCode);
       window.dispatchEvent(new Event('storage'));
+      
+      if (get().autosaveEnabled) {
+        localStorage.setItem('hydra-autosave', get().serializeGraph());
+      }
     } catch (err) {
       // Keep code in sync even if parser fails mid-typing
       set({ generatedCode: newCode });
