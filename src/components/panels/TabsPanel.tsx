@@ -12,7 +12,6 @@ export default function TabsPanel() {
   const removeTab = useGraphStore((s) => s.removeTab);
   const switchTab = useGraphStore((s) => s.switchTab);
   const renameTab = useGraphStore((s) => s.renameTab);
-  const goLive = useGraphStore((s) => s.goLive);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -44,7 +43,7 @@ export default function TabsPanel() {
               onClick={() => switchTab(tab.id)}
             >
               <div className="tabs-bar__tab-content">
-                {isLive && <div className="tabs-bar__live-dot" title="LIVE SOURCE" />}
+                {isLive && <div className="tabs-bar__live-dot" title="CURRENT PERFORMANCE PATCH" />}
                 
                 {editingId === tab.id ? (
                   <input
@@ -64,17 +63,6 @@ export default function TabsPanel() {
               </div>
 
               <div className="tabs-bar__actions">
-                {isActive && !isLive && (
-                  <button 
-                    className="tabs-bar__live-btn" 
-                    onClick={(e) => { e.stopPropagation(); goLive(tab.id); }}
-                    title="Promote to Performance"
-                  >
-                    <Radio size={8} />
-                    <span>LIVE</span>
-                  </button>
-                )}
-                
                 {tabs.length > 1 && (
                   <button 
                     className="tabs-bar__close-btn" 

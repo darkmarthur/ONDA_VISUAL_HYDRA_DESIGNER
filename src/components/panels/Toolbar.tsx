@@ -16,7 +16,8 @@ import {
   Upload,
   Hexagon,
   Globe,
-  Plus
+  Plus,
+  Radio
 } from 'lucide-react';
 
 export default function Toolbar() {
@@ -31,6 +32,9 @@ export default function Toolbar() {
   const setEditorMode=useGraphStore((s) => s.setEditorMode);
   const autosaveEnabled=useGraphStore((s) => s.autosaveEnabled);
   const setAutosaveEnabled=useGraphStore((s) => s.setAutosaveEnabled);
+  const setPerformancePatch=useGraphStore((s) => s.setPerformancePatch);
+  const activeTabId=useGraphStore((s) => s.activeTabId);
+  const liveTabId=useGraphStore((s) => s.liveTabId);
 
   const [showSave, setShowSave]=useState(false);
   const [showMenu, setShowMenu]=useState(false);
@@ -115,14 +119,14 @@ export default function Toolbar() {
         {/* Group 1: Workspace Mode Switcher - Refactored to Segmented Control */}
         <div className="toolbar__mode-switch">
           <button
-            className={`toolbar__mode-btn ${editorMode === 'visual' ? 'toolbar__mode-btn--active' : ''}`}
+            className={`toolbar__mode-btn ${editorMode==='visual'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('visual')}
           >
             <LayoutTemplate size={14} className="toolbar__mode-icon" />
             Visual
           </button>
           <button
-            className={`toolbar__mode-btn ${editorMode === 'code' ? 'toolbar__mode-btn--active' : ''}`}
+            className={`toolbar__mode-btn ${editorMode==='code'? 'toolbar__mode-btn--active':''}`}
             onClick={() => setEditorMode('code')}
           >
             <Code size={14} className="toolbar__mode-icon" />
@@ -141,6 +145,16 @@ export default function Toolbar() {
           >
             <Monitor size={14} className="toolbar__icon" />
             Performance window
+          </button>
+
+          <button
+            className={`toolbar__btn ${activeTabId===liveTabId? 'toolbar__btn--active-live':''}`}
+            onClick={() => setPerformancePatch()}
+            title="Update Performance window with current editor state"
+            style={activeTabId===liveTabId? { color: '#00ff00', borderColor: '#00ff00', background: 'rgba(0,255,0,0.1)' }:{}}
+          >
+            <Radio size={14} className={`toolbar__icon ${activeTabId===liveTabId? 'animate-pulse':''}`} />
+            {activeTabId===liveTabId? "Active patch":"Set active patch"}
           </button>
         </div>
 
@@ -244,14 +258,14 @@ export default function Toolbar() {
         {/* Group 5: Settings / Safety */}
         <div className="toolbar__group">
           <div className="toolbar__setting">
-             <span className="toolbar__setting-label">Autosave</span>
-             <button
-               className={`toolbar__toggle ${autosaveEnabled ? 'toolbar__toggle--active' : ''}`}
-               onClick={() => setAutosaveEnabled(!autosaveEnabled)}
-               title={autosaveEnabled ? "Autosave is ON" : "Autosave is OFF"}
-             >
-               <div className="toolbar__toggle-thumb" />
-             </button>
+            <span className="toolbar__setting-label">Autosave</span>
+            <button
+              className={`toolbar__toggle ${autosaveEnabled? 'toolbar__toggle--active':''}`}
+              onClick={() => setAutosaveEnabled(!autosaveEnabled)}
+              title={autosaveEnabled? "Autosave is ON":"Autosave is OFF"}
+            >
+              <div className="toolbar__toggle-thumb" />
+            </button>
           </div>
 
           <button

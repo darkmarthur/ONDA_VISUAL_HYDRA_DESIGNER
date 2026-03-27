@@ -52,7 +52,7 @@ interface GraphState {
   removeTab: (id: string) => void;
   switchTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
-  goLive: (id: string) => void;
+  setPerformancePatch: (id?: string) => void;
 
   // ─── Core Actions ────────────────────────────────────────────────────────
   onNodesChange: (changes: NodeChange<Node<HydraNodeData>>[]) => void;
@@ -203,17 +203,18 @@ export const useGraphStore = create<GraphState>()(
     }));
   },
 
-  goLive: (id) => {
+  setPerformancePatch: (id) => {
     const { tabs, activeTabId, nodes, edges, generatedCode } = get();
-    const targetTab = id === activeTabId 
+    const targetId = id || activeTabId;
+    const targetTab = targetId === activeTabId 
       ? { nodes, edges, code: generatedCode } 
-      : tabs.find(t => t.id === id);
+      : tabs.find(t => t.id === targetId);
     
     if (!targetTab) return;
 
-    set({ liveTabId: id });
+    set({ liveTabId: targetId });
     
-    // Push code to performance window
+    // Push code to performance window explicitly
     localStorage.setItem('hydra-live-code', targetTab.code);
     window.dispatchEvent(new Event('storage'));
   },
@@ -583,13 +584,9 @@ export const useGraphStore = create<GraphState>()(
       tabs: s.tabs.map(t => t.id === activeTabId ? { ...t, nodes, edges, code } : t)
     }));
     
-    // Sync Local Preview
-    localStorage.setItem('hydra-live-code', code);
-    window.dispatchEvent(new Event('storage'));
-
-    // Update Live View if this is the live tab
-    if (activeTabId === liveTabId) {
-      localStorage.setItem('hydra-live-code', code);
+    // Only sync to autosave, stop automatic performance broadcast
+    if (get().autosaveEnabled) {
+      localStorage.setItem('hydra-autosave', get().serializeGraph());
     }
 
     if (get().autosaveEnabled) {
