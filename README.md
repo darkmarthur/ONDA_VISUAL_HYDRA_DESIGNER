@@ -195,3 +195,8 @@ Its node-based interaction is intentionally familiar to artists who come from **
 This project was made with deep admiration for Hydra and for the community that has kept it alive as a free, experimental, and powerful tool.
 
 **Hydra Visual Editor** exists as a visual extension of that spirit.
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+See the [LICENSE](./LICENSE) file for details.
